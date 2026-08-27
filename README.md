@@ -2,9 +2,9 @@
 
 개인이 장기간 축적하는 문서, 프로젝트, 아이디어와 그 근거를 관리하기 위한 Personal AI Knowledge OS입니다.
 
-현재 상태는 **Phase 1 Step 2 — Supabase Foundation**입니다. 19개 테이블 migration, 시스템 사전 seed, RLS, Private Storage, Supabase 클라이언트와 DB 타입 기반을 구성했습니다. 호스팅 프로젝트에 migration을 적용하고 원격 보안 Gate를 통과하면 Step 2가 최종 완료됩니다.
+현재 상태는 **Phase 1 Step 3 — App Shell과 Auth UI**입니다. Supabase Foundation 위에 개인 계정 로그인, 비밀번호 재설정, 보호 Route, 세션 복구, 로그아웃, 반응형 App Shell과 Dashboard 빈 상태를 구성했습니다.
 
-로그인 화면과 실제 Knowledge CRUD, 파일 업로드·파싱, 검색, Graph, AI/RAG, Memory 기능은 아직 구현하지 않았습니다.
+실제 Knowledge CRUD, 파일 업로드·파싱, 검색, Graph, AI/RAG, Memory 기능은 아직 구현하지 않았습니다.
 
 ## 요구 환경
 
@@ -54,4 +54,4 @@ npm run check
 
 ## 다음 단계 경계
 
-Step 2가 원격 보안 Gate를 통과하기 전에는 Step 3의 로그인 UI와 App Shell을 시작하지 않습니다. 이후 단계의 Knowledge CRUD, 업로드·파싱, 검색, Graph, AI/RAG, Memory도 현재 범위에 포함하지 않습니다.
+Step 3 Gate는 실제 Supabase 계정으로 로그인·로그아웃·새로고침 후 세션 복구를 확인해야 완료됩니다. 다음 Step 4에서는 Taxonomy와 Knowledge Item CRUD만 구현합니다.

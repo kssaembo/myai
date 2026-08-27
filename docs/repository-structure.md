@@ -7,7 +7,7 @@ personal-ai-knowledge-os/
 ├── scripts/                      # DB 타입 생성과 원격 보안 검증
 ├── src/
 │   ├── app/       # 앱 시작점과 전역 조립
-│   ├── features/  # 사용자 기능 단위 모듈
+│   ├── features/  # Auth, Dashboard 등 사용자 기능 단위 모듈
 │   ├── shared/    # 공통 코드와 Supabase adapter
 │   ├── styles/    # 전역 스타일과 디자인 토큰
 │   └── test/      # 공통 테스트 설정
@@ -17,6 +17,7 @@ personal-ai-knowledge-os/
 │   ├── config.toml               # 로컬 Supabase/Auth 설정
 │   └── seed.sql                  # 로컬 전용 seed 진입점
 ├── .env.example
+├── vercel.json                  # SPA 보호 Route 새로고침 fallback
 ├── eslint.config.js
 ├── vitest.config.ts
 └── vite.config.ts
@@ -42,4 +43,4 @@ app → features → shared
 
 ## 아직 존재하지 않는 계층
 
-인증 Provider/UI, 도메인 API adapter, Graph, RAG, AI와 Memory 관련 폴더는 의도적으로 만들지 않았습니다. 각 계층은 해당 구현 단계에서 책임과 인터페이스가 확정된 뒤 추가합니다.
+Knowledge 도메인 API adapter, Graph, RAG, AI와 Memory 관련 폴더는 의도적으로 만들지 않았습니다. 각 계층은 해당 구현 단계에서 책임과 인터페이스가 확정된 뒤 추가합니다.

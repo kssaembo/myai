@@ -123,3 +123,13 @@ npm run supabase:stop
 - [ ] `npm run verify:supabase` 통과
 
 모든 항목이 끝난 뒤에만 Phase 1 Step 3 — App Shell과 Auth UI로 진행합니다.
+
+## Step 3 Auth URL 설정
+
+로그인 UI를 Vercel에 배포한 뒤 Supabase Dashboard의 **Authentication → URL Configuration**에서 다음을 설정합니다.
+
+- Site URL: 실제 Vercel production 주소
+- Redirect URLs: `https://<실제-도메인>/login?mode=recovery`
+- 로컬 개발도 사용할 경우: `http://localhost:5173/login?mode=recovery`
+
+비밀번호 재설정 메일이 올바른 서비스로 돌아오기 위해 필요합니다. Vercel 환경변수 저장 후에는 새 deployment를 실행해야 합니다.
