@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '@/features/auth/auth-context'
 
@@ -20,6 +20,12 @@ const pageTitles: Record<string, string> = {
   '/graph': 'Knowledge Graph',
   '/imports': 'Imports',
   '/settings/taxonomy': 'Settings',
+}
+
+function getPageTitle(pathname: string) {
+  if (pathname.startsWith('/knowledge')) return 'Knowledge'
+  if (pathname.startsWith('/projects')) return 'Projects'
+  return pageTitles[pathname] ?? 'Knowledge OS'
 }
 
 function NavigationIcon({ name }: { name: IconName }) {
@@ -77,6 +83,7 @@ function NavigationIcon({ name }: { name: IconName }) {
 export function AppShell() {
   const { user, signOut } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [signOutError, setSignOutError] = useState(false)
 
@@ -186,7 +193,7 @@ export function AppShell() {
             </button>
             <div>
               <span className="header-context">Workspace</span>
-              <strong>{pageTitles[location.pathname] ?? 'Knowledge OS'}</strong>
+              <strong>{getPageTitle(location.pathname)}</strong>
             </div>
           </div>
           <div className="header-actions">
@@ -216,10 +223,10 @@ export function AppShell() {
             <button
               className="primary-button compact-button"
               type="button"
-              disabled
-              title="문서 작성은 Step 4에서 활성화됩니다"
+              onClick={() => void navigate('/knowledge/new')}
+              title="새 지식 만들기"
             >
-              새 문서
+              새 지식
             </button>
           </div>
         </header>

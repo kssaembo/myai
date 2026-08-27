@@ -1,5 +1,7 @@
 # Personal AI Knowledge OS
 
+Current checkpoint: **Phase 1 Step 4 — Taxonomy and Knowledge Item CRUD**.
+
 개인이 장기간 축적하는 문서, 프로젝트, 아이디어와 그 근거를 관리하기 위한 Personal AI Knowledge OS입니다.
 
 현재 상태는 **Phase 1 Step 3 — App Shell과 Auth UI**입니다. Supabase Foundation 위에 개인 계정 로그인, 비밀번호 재설정, 보호 Route, 세션 복구, 로그아웃, 반응형 App Shell과 Dashboard 빈 상태를 구성했습니다.
