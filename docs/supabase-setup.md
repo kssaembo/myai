@@ -2,6 +2,16 @@
 
 이 문서는 Phase 1 Step 2를 호스팅된 Supabase 프로젝트에 안전하게 반영하는 절차입니다. 클라이언트에는 Project URL과 **publishable key**만 사용합니다. secret key, legacy `service_role` key와 Database password는 `.env.local`에 넣지 않습니다.
 
+## Step 7 추가 Migration
+
+Step 6까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.
+
+```text
+supabase/migrations/20260827000400_batch_imports.sql
+```
+
+이 Migration은 Import Job/Entry 생성, 파일별 결과 기록, 집계 갱신, 취소를 위한 RLS-aware RPC를 추가합니다. 기존 테이블의 RLS와 Private Storage 정책은 유지됩니다.
+
 ## Step 6 추가 Migration
 
 Step 5까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.

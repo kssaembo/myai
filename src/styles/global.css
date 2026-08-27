@@ -1766,6 +1766,206 @@ a {
   pointer-events: none;
   opacity: 0.5;
 }
+.import-mode-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 1.4rem;
+  padding: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f5f8f9;
+}
+.import-mode-tabs button,
+.batch-source-tabs button {
+  min-height: 38px;
+  padding: 0 1rem;
+  color: #74818d;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.import-mode-tabs button.active,
+.batch-source-tabs button.active {
+  color: var(--teal-dark);
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(28 52 62 / 7%);
+}
+.batch-source-tabs {
+  display: inline-flex;
+  margin-bottom: 1rem;
+  padding: 0.3rem;
+}
+.archive-type-picker {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.8rem 1rem;
+  color: #53616d;
+  border: 1px solid #dce5e8;
+  border-radius: 11px;
+  background: #f9fbfb;
+  font-size: 0.7rem;
+}
+.archive-type-picker label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+.archive-type-picker p {
+  margin: 0 0 0 auto;
+  color: #8b979f;
+  font-size: 0.64rem;
+}
+.batch-dropzone {
+  min-height: 330px;
+}
+.batch-workspace {
+  display: grid;
+  gap: 0.8rem;
+}
+.batch-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem;
+}
+.batch-summary h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+.batch-summary p:last-child {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.batch-progress {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.9rem 1.1rem;
+}
+.batch-progress > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.7rem;
+}
+.batch-progress > div span {
+  color: #7d8993;
+}
+.batch-progress progress {
+  width: 100%;
+  height: 7px;
+  accent-color: var(--teal-dark);
+}
+.import-history {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+}
+.import-history > .card-heading {
+  padding-inline: 0;
+  border: 0;
+}
+.import-job-card {
+  overflow: hidden;
+}
+.import-job-card summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  cursor: pointer;
+  list-style: none;
+}
+.import-job-card summary::-webkit-details-marker {
+  display: none;
+}
+.import-job-card summary > div {
+  display: grid;
+  gap: 0.25rem;
+}
+.import-job-card summary strong {
+  font-size: 0.76rem;
+}
+.import-job-card summary span {
+  color: #84919a;
+  font-size: 0.63rem;
+}
+.job-status,
+.entry-status {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: #edf2f4;
+  font-size: 0.58rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.job-completed,
+.entry-parsed {
+  color: #17634d !important;
+  background: #e5f6ef;
+}
+.job-partial,
+.entry-partial,
+.entry-duplicate {
+  color: #7a5710 !important;
+  background: #fff4d6;
+}
+.job-failed,
+.entry-failed {
+  color: #9f3838 !important;
+  background: #ffeded;
+}
+.import-entry-list {
+  border-top: 1px solid var(--line);
+}
+.import-entry-list > div {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.75rem 1.15rem;
+  border-bottom: 1px solid #edf1f3;
+}
+.import-entry-list > div:last-child {
+  border-bottom: 0;
+}
+.import-entry-list > div > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.18rem;
+}
+.import-entry-list strong {
+  overflow: hidden;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.import-entry-list small {
+  overflow: hidden;
+  color: #8b979f;
+  font-size: 0.6rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.import-entry-list a {
+  color: var(--teal-dark);
+  font-size: 0.63rem;
+  font-weight: 700;
+}
 
 .document-layout {
   display: grid;
@@ -2160,6 +2360,24 @@ a {
   .duplicate-card {
     align-items: stretch;
     flex-direction: column;
+  }
+  .batch-summary,
+  .archive-type-picker {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .archive-type-picker p {
+    margin-left: 0;
+  }
+  .batch-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .import-entry-list > div {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+  .import-entry-list > div > a {
+    grid-column: 2;
   }
   .dashboard-hero,
   .page-heading {

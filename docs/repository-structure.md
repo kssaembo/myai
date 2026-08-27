@@ -7,7 +7,9 @@ personal-ai-knowledge-os/
 ├── scripts/                      # DB 타입 생성과 원격 보안 검증
 ├── src/
 │   ├── app/       # 앱 시작점과 전역 조립
+│   ├── entities/  # Document, Taxonomy, Import Job 도메인 API와 파서
 │   ├── features/  # Auth, Dashboard 등 사용자 기능 단위 모듈
+│   ├── pages/     # Route 단위 화면
 │   ├── shared/    # 공통 코드와 Supabase adapter
 │   ├── styles/    # 전역 스타일과 디자인 토큰
 │   └── test/      # 공통 테스트 설정
@@ -43,4 +45,4 @@ app → features → shared
 
 ## 아직 존재하지 않는 계층
 
-Knowledge 도메인 API adapter, Graph, RAG, AI와 Memory 관련 폴더는 의도적으로 만들지 않았습니다. 각 계층은 해당 구현 단계에서 책임과 인터페이스가 확정된 뒤 추가합니다.
+REF 구조화, Graph, RAG, AI와 Memory 관련 계층은 의도적으로 만들지 않았습니다. 각 계층은 해당 구현 단계에서 책임과 인터페이스가 확정된 뒤 추가합니다.

@@ -551,6 +551,34 @@ export type Database = {
         }
         Returns: number
       }
+      create_import_job: {
+        Args: {
+          p_entries: Json
+          p_import_type: ImportType
+          p_job_id: string
+        }
+        Returns: number
+      }
+      update_import_entry: {
+        Args: {
+          p_content_hash?: string | null
+          p_document_id?: string | null
+          p_entry_id: string
+          p_error_code?: string | null
+          p_error_message?: string | null
+          p_status: ImportEntryStatus
+          p_version_id?: string | null
+        }
+        Returns: undefined
+      }
+      refresh_import_job: {
+        Args: { p_job_id: string }
+        Returns: ImportJobStatus
+      }
+      cancel_import_job: {
+        Args: { p_job_id: string }
+        Returns: undefined
+      }
       normalize_lookup_text: {
         Args: { input_value: string }
         Returns: string

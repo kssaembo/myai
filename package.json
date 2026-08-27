@@ -29,11 +29,13 @@
     "verify:foundation-contract": "node scripts/verify-foundation-contract.mjs",
     "verify:step5-contract": "node scripts/verify-step5-contract.mjs",
     "verify:step6-contract": "node scripts/verify-step6-contract.mjs",
+    "verify:step7-contract": "node scripts/verify-step7-contract.mjs",
     "verify:supabase": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.verification.local scripts/verify-supabase-foundation.mjs",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run verify:foundation-contract && npm run verify:step5-contract && npm run verify:step6-contract && npm run build"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run verify:foundation-contract && npm run verify:step5-contract && npm run verify:step6-contract && npm run verify:step7-contract && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",
+    "@zip.js/zip.js": "2.8.60",
     "mammoth": "1.12.1",
     "pdfjs-dist": "6.2.108",
     "react": "19.2.8",

@@ -14,6 +14,7 @@ import {
 } from '@/entities/document/file-validation'
 import { readTaxonomy, type Category, type Tag } from '@/entities/taxonomy/api'
 import { useAuth } from '@/features/auth/auth-context'
+import { BatchImportPanel } from '@/features/imports/BatchImportPanel'
 import { friendlyDataError } from '@/shared/lib/display'
 import type { DocumentKind } from '@/shared/lib/supabase/database.types'
 
@@ -30,6 +31,31 @@ const documentKinds: [DocumentKind, string][] = [
 type UploadPhase = 'idle' | 'validating' | 'ready' | 'uploading' | 'saving' | 'complete'
 
 export function ImportsPage() {
+  const [mode, setMode] = useState<'single' | 'batch'>('batch')
+  return (
+    <>
+      <div className="page-section import-mode-tabs" role="tablist" aria-label="가져오기 방식">
+        <button
+          type="button"
+          className={mode === 'batch' ? 'active' : ''}
+          onClick={() => setMode('batch')}
+        >
+          일괄 가져오기
+        </button>
+        <button
+          type="button"
+          className={mode === 'single' ? 'active' : ''}
+          onClick={() => setMode('single')}
+        >
+          단일 파일
+        </button>
+      </div>
+      {mode === 'batch' ? <BatchImportPanel /> : <SingleFileImport />}
+    </>
+  )
+}
+
+function SingleFileImport() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [categories, setCategories] = useState<Category[]>([])
@@ -87,7 +113,7 @@ export function ImportsPage() {
     setError('')
     setPhase('uploading')
     try {
-      const itemId = await createUploadedDocument({
+      const { itemId } = await createUploadedDocument({
         ownerId: user.id,
         title: form.title,
         summary: form.summary,

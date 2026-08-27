@@ -95,7 +95,7 @@ export async function createUploadedDocument(input: NewDocumentInput) {
     await bucket.remove([path])
     throw new Error(error.message)
   }
-  return itemId
+  return { itemId, versionId }
 }
 
 export async function readDocumentMetadata(itemId: string) {
