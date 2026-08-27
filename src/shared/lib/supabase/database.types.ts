@@ -640,6 +640,10 @@ export type Database = {
         }
         Returns: SearchKnowledgeRow[]
       }
+      get_project_aggregate: {
+        Args: { p_project_id: string }
+        Returns: Json
+      }
       normalize_lookup_text: {
         Args: { input_value: string }
         Returns: string

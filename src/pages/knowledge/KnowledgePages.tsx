@@ -14,6 +14,7 @@ import {
 import { readTaxonomy, type Category, type NodeType, type Tag } from '@/entities/taxonomy/api'
 import { useAuth } from '@/features/auth/auth-context'
 import { DocumentDetailView } from '@/pages/documents/DocumentDetailView'
+import { ProjectDetailView } from '@/pages/projects/ProjectDetailView'
 import {
   formatDate,
   friendlyDataError,
@@ -751,6 +752,8 @@ export function KnowledgeDetailPage() {
     )
 
   if (record.nodeType.key === 'document') return <DocumentDetailView record={record} />
+  if (record.nodeType.key === 'project')
+    return <ProjectDetailView record={record} onChanged={load} />
 
   return (
     <section className="page-section detail-page">

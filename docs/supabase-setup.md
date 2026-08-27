@@ -2,6 +2,16 @@
 
 이 문서는 Phase 1 Step 2를 호스팅된 Supabase 프로젝트에 안전하게 반영하는 절차입니다. 클라이언트에는 Project URL과 **publishable key**만 사용합니다. secret key, legacy `service_role` key와 Database password는 `.env.local`에 넣지 않습니다.
 
+## Step 10 추가 Migration
+
+Step 9까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.
+
+```text
+supabase/migrations/20260827000700_project_aggregation.sql
+```
+
+적용 후 구조화된 Project를 Projects 목록에서 열고 문서·문제–해결·결정·패턴·교훈 탭과 원문 이동을 확인합니다.
+
 ## Step 9 추가 Migration
 
 Step 8까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.

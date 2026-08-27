@@ -1,10 +1,10 @@
 # Personal AI Knowledge OS
 
-Current checkpoint: **Phase 1 Step 9 — Integrated Search**.
+Current checkpoint: **Phase 1 Step 10 — Project Detail Aggregation**.
 
 개인이 장기간 축적하는 문서, 프로젝트, 아이디어와 그 근거를 관리하기 위한 Personal AI Knowledge OS입니다.
 
-현재는 로그인, Taxonomy·Knowledge CRUD, Private 원본·Version, 본문·Section 추출, ZIP Import, REF 규칙 구조화에 더해 통합 검색과 원문 위치 이동까지 구성했습니다.
+현재는 로그인, Taxonomy·Knowledge CRUD, Private 원본·Version, 본문·Section 추출, ZIP Import, REF 규칙 구조화, 통합 검색에 더해 Project 개발 지식 집계까지 구성했습니다.
 
 Graph, AI/RAG, Memory 기능은 아직 구현하지 않았습니다.
 
@@ -57,4 +57,4 @@ npm run check
 
 ## 다음 단계 경계
 
-Step 9 Gate는 서비스명, 기술명, 문제 증상, 교실 운영 표현을 포함한 검색 평가 세트가 관련 REF와 원문 근거를 반환하는지 확인하는 것입니다. AI 분석과 Vector Search는 사용하지 않습니다.
+Step 10 Gate는 독점게임 Project 한 화면에서 문서, 문제–해결, 결정, 패턴, 교훈과 각 원문 Evidence를 추적할 수 있는지 확인하는 것입니다. AI 분석과 Vector Search는 사용하지 않습니다.
