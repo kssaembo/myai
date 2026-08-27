@@ -53,6 +53,12 @@ export function friendlyDataError(error: unknown) {
     return '동일한 SHA-256 원본이 이미 보존되어 있습니다.'
   if (message.includes('create_document_upload') || message.includes('add_document_version'))
     return 'Step 5 SQL Migration을 먼저 Supabase에 적용해 주세요.'
+  if (message.includes('commit_document_parse'))
+    return 'Step 6 SQL Migration을 먼저 Supabase에 적용해 주세요.'
+  if (message.includes('PARSER_TIMEOUT'))
+    return '문서 처리 시간이 2분을 초과했습니다. 더 작은 파일로 다시 시도해 주세요.'
+  if (message.includes('PARSER_WORKER_FAILED'))
+    return '브라우저 문서 파서를 시작하지 못했습니다. 새로고침 후 다시 시도해 주세요.'
   if (message.includes('duplicate key') || message.includes('unique constraint'))
     return '같은 이름의 항목이 이미 있습니다.'
   if (message.includes('category depth'))

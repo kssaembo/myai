@@ -538,6 +538,19 @@ export type Database = {
         }
         Returns: string
       }
+      commit_document_parse: {
+        Args: {
+          p_content_text: string | null
+          p_error_code: string | null
+          p_error_message: string | null
+          p_parse_status: ParseStatus
+          p_parser_name: string
+          p_parser_version: string
+          p_sections: Json
+          p_version_id: string
+        }
+        Returns: number
+      }
       normalize_lookup_text: {
         Args: { input_value: string }
         Returns: string

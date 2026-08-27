@@ -2,6 +2,16 @@
 
 이 문서는 Phase 1 Step 2를 호스팅된 Supabase 프로젝트에 안전하게 반영하는 절차입니다. 클라이언트에는 Project URL과 **publishable key**만 사용합니다. secret key, legacy `service_role` key와 Database password는 `.env.local`에 넣지 않습니다.
 
+## Step 6 추가 Migration
+
+Step 5까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.
+
+```text
+supabase/migrations/20260827000300_parser_sections.sql
+```
+
+이 Migration은 로그인 사용자가 자신의 Document Version 파싱 결과와 Section을 한 트랜잭션으로 교체 저장하는 `commit_document_parse` 함수만 추가합니다. 기존 RLS와 Private Storage 정책은 유지됩니다.
+
 ## Step 5 추가 Migration
 
 Foundation SQL을 이미 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.

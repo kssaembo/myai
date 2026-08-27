@@ -1,12 +1,12 @@
 # Personal AI Knowledge OS
 
-Current checkpoint: **Phase 1 Step 5 — File Storage and Document Version**.
+Current checkpoint: **Phase 1 Step 6 — Parser and Document Sections**.
 
 개인이 장기간 축적하는 문서, 프로젝트, 아이디어와 그 근거를 관리하기 위한 Personal AI Knowledge OS입니다.
 
-현재 상태는 **Phase 1 Step 3 — App Shell과 Auth UI**입니다. Supabase Foundation 위에 개인 계정 로그인, 비밀번호 재설정, 보호 Route, 세션 복구, 로그아웃, 반응형 App Shell과 Dashboard 빈 상태를 구성했습니다.
+현재는 로그인과 보호 Route, Taxonomy·Knowledge CRUD, Private 원본 업로드·Version 관리에 더해 MD·TXT·PDF·DOCX 본문 추출과 Section 생성까지 구성했습니다.
 
-실제 Knowledge CRUD, 파일 업로드·파싱, 검색, Graph, AI/RAG, Memory 기능은 아직 구현하지 않았습니다.
+ZIP/REF 일괄 Import, 검색, Graph, AI/RAG, Memory 기능은 아직 구현하지 않았습니다.
 
 ## 요구 환경
 
@@ -56,4 +56,4 @@ npm run check
 
 ## 다음 단계 경계
 
-Step 3 Gate는 실제 Supabase 계정으로 로그인·로그아웃·새로고침 후 세션 복구를 확인해야 완료됩니다. 다음 Step 4에서는 Taxonomy와 Knowledge Item CRUD만 구현합니다.
+Step 6 Gate는 실제 배포 환경에서 지원 파일을 파싱하고 원본과 추출 본문, Section 경계를 비교해 확인해야 완료됩니다. 다음 Step 7에서는 ZIP·REF 일괄 Import를 구현합니다.

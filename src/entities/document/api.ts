@@ -3,6 +3,7 @@ import { supabase, type Tables } from '@/shared/lib/supabase'
 import type { DocumentKind } from '@/shared/lib/supabase/database.types'
 
 import type { ValidatedDocumentFile } from './file-validation'
+import type { ParserResult } from './parser/types'
 
 export type Document = Tables<'documents'>
 export type DocumentVersion = Tables<'document_versions'>
@@ -158,6 +159,86 @@ export async function downloadDocumentVersion(version: DocumentVersion) {
   document.body.append(anchor)
   anchor.click()
   anchor.remove()
+}
+
+export async function readDocumentSections(versionId: string) {
+  const { data, error } = await supabase
+    .from('document_sections')
+    .select('*')
+    .eq('version_id', versionId)
+    .order('ordinal')
+  throwIfError(error)
+  return data ?? []
+}
+
+export async function readOriginalForParsing(version: DocumentVersion) {
+  const { data, error } = await supabase.storage
+    .from('knowledge-originals')
+    .download(version.storage_path)
+  throwIfError(error)
+  if (!data) throw new Error('원본 파일을 읽지 못했습니다.')
+  return data.arrayBuffer()
+}
+
+export async function readOriginalPreview(version: DocumentVersion) {
+  if (version.format === 'md' || version.format === 'txt') {
+    const { data, error } = await supabase.storage
+      .from('knowledge-originals')
+      .download(version.storage_path)
+    throwIfError(error)
+    if (!data) throw new Error('원본 파일을 읽지 못했습니다.')
+    return { kind: 'text' as const, value: await data.text() }
+  }
+  if (version.format === 'pdf') {
+    const { data, error } = await supabase.storage
+      .from('knowledge-originals')
+      .createSignedUrl(version.storage_path, 300)
+    throwIfError(error)
+    if (!data) throw new Error('PDF 미리보기 주소를 만들지 못했습니다.')
+    return { kind: 'pdf' as const, value: data.signedUrl }
+  }
+  return { kind: 'unavailable' as const, value: '' }
+}
+
+export async function setVersionProcessing(versionId: string) {
+  const { error } = await supabase
+    .from('document_versions')
+    .update({
+      parse_status: 'processing',
+      parse_error_code: null,
+      parse_error_message: null,
+    })
+    .eq('id', versionId)
+  throwIfError(error)
+}
+
+export async function commitDocumentParse(versionId: string, result: ParserResult) {
+  const ids = result.sections.map(() => crypto.randomUUID())
+  const sectionPayload = result.sections.map((section, index) => ({
+    id: ids[index],
+    parent_section_id: section.parentOrdinal === null ? null : (ids[section.parentOrdinal] ?? null),
+    ordinal: section.ordinal,
+    heading: section.heading,
+    heading_level: section.headingLevel,
+    heading_path: section.headingPath,
+    content: section.content,
+    chunk_kind: section.chunkKind,
+    locator: section.locator,
+    content_hash: section.contentHash,
+    token_estimate: section.tokenEstimate,
+  }))
+  const { data, error } = await supabase.rpc('commit_document_parse', {
+    p_version_id: versionId,
+    p_parse_status: result.status,
+    p_content_text: result.contentText,
+    p_parser_name: result.parserName,
+    p_parser_version: result.parserVersion,
+    p_error_code: result.errorCode,
+    p_error_message: result.errorMessage,
+    p_sections: sectionPayload,
+  })
+  throwIfError(error)
+  return data
 }
 
 export interface DocumentUploadOptions {
