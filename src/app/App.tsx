@@ -12,6 +12,7 @@ import {
   KnowledgeListPage,
 } from '@/pages/knowledge/KnowledgePages'
 import { RefReviewPage } from '@/pages/ref-review/RefReviewPage'
+import { SearchPage } from '@/pages/search/SearchPage'
 import { TaxonomyPage } from '@/pages/settings/TaxonomyPage'
 import { SectionPlaceholderPage } from '@/shared/ui/SectionPlaceholderPage'
 import '@/styles/global.css'
@@ -43,6 +44,7 @@ export function App() {
                 }
               />
               <Route path="imports" element={<ImportsPage />} />
+              <Route path="search" element={<SearchPage />} />
               <Route path="settings/taxonomy" element={<TaxonomyPage />} />
             </Route>
           </Route>

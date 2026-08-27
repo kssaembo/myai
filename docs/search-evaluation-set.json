@@ -1,0 +1,38 @@
+[
+  {
+    "id": "service-name",
+    "group": "서비스명",
+    "query": "비밀 숫자",
+    "expected_any": ["비밀 숫자", "SECRET_NUMBER"]
+  },
+  {
+    "id": "technology-name",
+    "group": "기술명",
+    "query": "PeerJS",
+    "expected_any": ["PeerJS", "WebRTC"]
+  },
+  {
+    "id": "problem-symptom",
+    "group": "문제 증상",
+    "query": "좌석이 찼",
+    "expected_any": ["좌석", "연결 초기화"]
+  },
+  {
+    "id": "classroom-operation",
+    "group": "교실 운영",
+    "query": "콘택트룸",
+    "expected_any": ["콘택트룸", "태블릿"]
+  },
+  {
+    "id": "reusable-pattern",
+    "group": "재사용 Pattern",
+    "query": "Teacher Host Pattern",
+    "expected_any": ["Teacher Host Pattern", "교사 Host"]
+  },
+  {
+    "id": "recovery-expression",
+    "group": "복구 표현",
+    "query": "연결 초기화",
+    "expected_any": ["연결 초기화", "좌석"]
+  }
+]

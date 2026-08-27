@@ -1,12 +1,12 @@
 # Personal AI Knowledge OS
 
-Current checkpoint: **Phase 1 Step 8 — REF Profile and Rule Structuring**.
+Current checkpoint: **Phase 1 Step 9 — Integrated Search**.
 
 개인이 장기간 축적하는 문서, 프로젝트, 아이디어와 그 근거를 관리하기 위한 Personal AI Knowledge OS입니다.
 
-현재는 로그인, Taxonomy·Knowledge CRUD, Private 원본·Version, 본문·Section 추출, ZIP Import에 더해 REF 판별·규칙 구조화·Evidence 기반 검토까지 구성했습니다.
+현재는 로그인, Taxonomy·Knowledge CRUD, Private 원본·Version, 본문·Section 추출, ZIP Import, REF 규칙 구조화에 더해 통합 검색과 원문 위치 이동까지 구성했습니다.
 
-검색, Graph, AI/RAG, Memory 기능은 아직 구현하지 않았습니다.
+Graph, AI/RAG, Memory 기능은 아직 구현하지 않았습니다.
 
 ## 요구 환경
 
@@ -25,23 +25,24 @@ npm run dev
 
 ## 명령
 
-| 명령                      | 역할                                       |
-| ------------------------- | ------------------------------------------ |
-| `npm run dev`             | 로컬 개발 서버 실행                        |
-| `npm run typecheck`       | TypeScript 정적 검사                       |
-| `npm run lint`            | ESLint 검사, 경고도 실패 처리              |
-| `npm run format`          | Prettier 자동 포맷                         |
-| `npm run format:check`    | 포맷 변경 없이 검사                        |
-| `npm run test`            | Vitest 일회 실행                           |
-| `npm run test:watch`      | Vitest 감시 모드                           |
-| `npm run build`           | 타입 검사 후 production build              |
-| `npm run supabase:start`  | 로컬 Supabase 시작(Docker 필요)            |
-| `npm run db:reset`        | 로컬 DB migration 재적용                   |
-| `npm run db:push`         | 연결된 원격 프로젝트에 migration 적용      |
-| `npm run db:test`         | pgTAP DB 계약·보안 검사                    |
-| `npm run db:types`        | 실제 DB에서 TypeScript 타입 재생성         |
-| `npm run verify:supabase` | 원격 anon·교차 사용자 DB/Storage 차단 검사 |
-| `npm run check`           | 전체 품질 Gate 실행                        |
+| 명령                      | 역할                                         |
+| ------------------------- | -------------------------------------------- |
+| `npm run dev`             | 로컬 개발 서버 실행                          |
+| `npm run typecheck`       | TypeScript 정적 검사                         |
+| `npm run lint`            | ESLint 검사, 경고도 실패 처리                |
+| `npm run format`          | Prettier 자동 포맷                           |
+| `npm run format:check`    | 포맷 변경 없이 검사                          |
+| `npm run test`            | Vitest 일회 실행                             |
+| `npm run test:watch`      | Vitest 감시 모드                             |
+| `npm run build`           | 타입 검사 후 production build                |
+| `npm run supabase:start`  | 로컬 Supabase 시작(Docker 필요)              |
+| `npm run db:reset`        | 로컬 DB migration 재적용                     |
+| `npm run db:push`         | 연결된 원격 프로젝트에 migration 적용        |
+| `npm run db:test`         | pgTAP DB 계약·보안 검사                      |
+| `npm run db:types`        | 실제 DB에서 TypeScript 타입 재생성           |
+| `npm run verify:supabase` | 원격 anon·교차 사용자 DB/Storage 차단 검사   |
+| `npm run evaluate:search` | 실제 REF 데이터로 Step 9 검색 평가 세트 실행 |
+| `npm run check`           | 전체 품질 Gate 실행                          |
 
 ## 현재 품질 Gate
 
@@ -56,4 +57,4 @@ npm run check
 
 ## 다음 단계 경계
 
-Step 8 Gate는 서로 다른 REF 문서 5개에서 Section coverage와 Node·Relation·Evidence 제안을 사람이 검토하고, 원문과 일치하는지 확인해야 통과합니다. 자동 AI 분석은 사용하지 않습니다.
+Step 9 Gate는 서비스명, 기술명, 문제 증상, 교실 운영 표현을 포함한 검색 평가 세트가 관련 REF와 원문 근거를 반환하는지 확인하는 것입니다. AI 분석과 Vector Search는 사용하지 않습니다.

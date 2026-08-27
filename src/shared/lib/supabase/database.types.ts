@@ -311,6 +311,33 @@ type ImportEntryRow = {
   updated_at: string
 }
 
+export type SearchKnowledgeRow = {
+  item_id: string
+  section_id: string | null
+  document_id: string | null
+  version_id: string | null
+  node_type_key: string
+  node_type_label: string
+  node_type_color: string
+  title: string
+  summary: string | null
+  category_id: string | null
+  category_name: string | null
+  tags: Json
+  project_id: string | null
+  project_title: string | null
+  format: DocumentFormat | null
+  heading_path: string[]
+  locator: Json
+  snippet: string
+  match_reason: string | null
+  score: number
+  verification_status: VerificationStatus
+  status: ItemStatus
+  updated_at: string
+  total_count: number
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -595,6 +622,23 @@ export type Database = {
           p_version_id: string
         }
         Returns: Json
+      }
+      search_knowledge: {
+        Args: {
+          p_category_ids?: string[] | null
+          p_date_from?: string | null
+          p_date_to?: string | null
+          p_formats?: DocumentFormat[] | null
+          p_node_type_keys?: string[] | null
+          p_page?: number
+          p_page_size?: number
+          p_project_ids?: string[] | null
+          p_query?: string
+          p_statuses?: ItemStatus[] | null
+          p_tag_ids?: string[] | null
+          p_verification_statuses?: VerificationStatus[] | null
+        }
+        Returns: SearchKnowledgeRow[]
       }
       normalize_lookup_text: {
         Args: { input_value: string }

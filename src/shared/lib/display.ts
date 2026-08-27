@@ -64,6 +64,8 @@ export function friendlyDataError(error: unknown) {
     return 'Step 7 SQL Migration을 먼저 Supabase에 적용해 주세요.'
   if (message.includes('mark_ref_profile') || message.includes('commit_ref_review'))
     return 'Step 8 SQL Migration을 먼저 Supabase에 적용해 주세요.'
+  if (message.includes('search_knowledge'))
+    return 'Step 9 SQL Migration을 먼저 Supabase에 적용해 주세요.'
   if (message.includes('PARSER_TIMEOUT'))
     return '문서 처리 시간이 2분을 초과했습니다. 더 작은 파일로 다시 시도해 주세요.'
   if (message.includes('PARSER_WORKER_FAILED'))

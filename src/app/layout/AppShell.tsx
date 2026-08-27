@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '@/features/auth/auth-context'
 
-type IconName = 'dashboard' | 'knowledge' | 'projects' | 'graph' | 'imports' | 'settings'
+type IconName = 'dashboard' | 'search' | 'knowledge' | 'projects' | 'graph' | 'imports' | 'settings'
 
 const navigation: { label: string; to: string; icon: IconName; end?: boolean }[] = [
   { label: 'Dashboard', to: '/', icon: 'dashboard', end: true },
+  { label: 'Search', to: '/search', icon: 'search' },
   { label: 'Knowledge', to: '/knowledge', icon: 'knowledge' },
   { label: 'Projects', to: '/projects', icon: 'projects' },
   { label: 'Graph', to: '/graph', icon: 'graph' },
@@ -19,6 +20,7 @@ const pageTitles: Record<string, string> = {
   '/projects': 'Projects',
   '/graph': 'Knowledge Graph',
   '/imports': 'Imports',
+  '/search': 'Search',
   '/settings/taxonomy': 'Settings',
 }
 
@@ -36,6 +38,12 @@ function NavigationIcon({ name }: { name: IconName }) {
         <rect x="14" y="3" width="7" height="7" rx="2" />
         <rect x="3" y="14" width="7" height="7" rx="2" />
         <rect x="14" y="14" width="7" height="7" rx="2" />
+      </>
+    ),
+    search: (
+      <>
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m15.5 15.5 5 5" />
       </>
     ),
     knowledge: (
@@ -86,6 +94,18 @@ export function AppShell() {
   const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [signOutError, setSignOutError] = useState(false)
+  const globalSearchRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase() === 'k') {
+        event.preventDefault()
+        globalSearchRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', focusSearch)
+    return () => window.removeEventListener('keydown', focusSearch)
+  }, [])
 
   const handleSignOut = async () => {
     setSignOutError(false)
@@ -197,7 +217,15 @@ export function AppShell() {
             </div>
           </div>
           <div className="header-actions">
-            <label className="global-search" title="검색은 Phase 1 Step 9에서 활성화됩니다">
+            <form
+              className="global-search"
+              role="search"
+              onSubmit={(event) => {
+                event.preventDefault()
+                const query = globalSearchRef.current?.value.trim() ?? ''
+                void navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
+              }}
+            >
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -209,9 +237,19 @@ export function AppShell() {
                 <path d="m16 16 4 4" />
               </svg>
               <span className="sr-only">전체 검색</span>
-              <input type="search" placeholder="전체 지식 검색" disabled />
+              <input
+                ref={globalSearchRef}
+                key={location.pathname === '/search' ? location.search : 'global-search'}
+                type="search"
+                defaultValue={
+                  location.pathname === '/search'
+                    ? (new URLSearchParams(location.search).get('q') ?? '')
+                    : ''
+                }
+                placeholder="전체 지식 검색"
+              />
               <kbd>⌘ K</kbd>
-            </label>
+            </form>
             <button
               className="header-button"
               type="button"

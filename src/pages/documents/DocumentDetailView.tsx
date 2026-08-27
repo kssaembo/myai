@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 
 import {
   addUploadedDocumentVersion,
@@ -64,6 +64,9 @@ const failedResult = (message: string): ParserResult => ({
 
 export function DocumentDetailView({ record }: { record: KnowledgeRecord }) {
   const { user } = useAuth()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const requestedVersionId = searchParams.get('version') ?? ''
   const [documentData, setDocumentData] = useState<Document | null>(null)
   const [versions, setVersions] = useState<DocumentVersion[]>([])
   const [selectedVersionId, setSelectedVersionId] = useState('')
@@ -89,16 +92,18 @@ export function DocumentDetailView({ record }: { record: KnowledgeRecord }) {
       setDocumentData(data.document)
       setVersions(data.versions)
       setSelectedVersionId((current) =>
-        data.versions.some((version) => version.id === current)
-          ? current
-          : (data.document.active_version_id ?? data.versions[0]?.id ?? ''),
+        requestedVersionId && data.versions.some((version) => version.id === requestedVersionId)
+          ? requestedVersionId
+          : data.versions.some((version) => version.id === current)
+            ? current
+            : (data.document.active_version_id ?? data.versions[0]?.id ?? ''),
       )
     } catch (caught) {
       setError(friendlyDataError(caught))
     } finally {
       setIsLoading(false)
     }
-  }, [record.id])
+  }, [record.id, requestedVersionId])
 
   useEffect(() => {
     const timeout = window.setTimeout(() => void load(), 0)
@@ -132,6 +137,14 @@ export function DocumentDetailView({ record }: { record: KnowledgeRecord }) {
       window.clearTimeout(timeout)
     }
   }, [selectedVersion])
+
+  useEffect(() => {
+    if (!sections.length || !location.hash.startsWith('#section-')) return
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'center' })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [location.hash, sections])
 
   const addVersion = async (file?: File) => {
     if (!file || !user) return

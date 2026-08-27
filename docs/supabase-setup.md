@@ -2,6 +2,16 @@
 
 이 문서는 Phase 1 Step 2를 호스팅된 Supabase 프로젝트에 안전하게 반영하는 절차입니다. 클라이언트에는 Project URL과 **publishable key**만 사용합니다. secret key, legacy `service_role` key와 Database password는 `.env.local`에 넣지 않습니다.
 
+## Step 9 추가 Migration
+
+Step 8까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.
+
+```text
+supabase/migrations/20260827000600_search.sql
+```
+
+적용 후 비밀숫자 REF가 등록·파싱·구조화된 계정으로 `npm run evaluate:search`를 실행합니다. 실제 로그인 계정 정보를 `.env.verification.local`의 User A 항목에 입력하며 이 파일은 GitHub에 올리지 않습니다.
+
 ## Step 8 추가 Migration
 
 Step 7까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.
