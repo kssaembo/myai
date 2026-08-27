@@ -1,0 +1,2 @@
+-- System dictionaries and per-user defaults are seeded by the foundation migration.
+-- V1 intentionally contains no sample Knowledge or Memory rows.
