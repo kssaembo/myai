@@ -49,6 +49,10 @@ export function formatDate(value: string) {
 
 export function friendlyDataError(error: unknown) {
   const message = error instanceof Error ? error.message : ''
+  if (message.includes('DUPLICATE_DOCUMENT_HASH'))
+    return '동일한 SHA-256 원본이 이미 보존되어 있습니다.'
+  if (message.includes('create_document_upload') || message.includes('add_document_version'))
+    return 'Step 5 SQL Migration을 먼저 Supabase에 적용해 주세요.'
   if (message.includes('duplicate key') || message.includes('unique constraint'))
     return '같은 이름의 항목이 이미 있습니다.'
   if (message.includes('category depth'))

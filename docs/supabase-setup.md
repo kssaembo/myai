@@ -2,6 +2,17 @@
 
 이 문서는 Phase 1 Step 2를 호스팅된 Supabase 프로젝트에 안전하게 반영하는 절차입니다. 클라이언트에는 Project URL과 **publishable key**만 사용합니다. secret key, legacy `service_role` key와 Database password는 `.env.local`에 넣지 않습니다.
 
+## Step 5 추가 Migration
+
+Foundation SQL을 이미 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.
+
+```text
+supabase/migrations/20260827000200_document_uploads.sql
+```
+
+이 Migration은 Document 업로드 메타데이터를 트랜잭션으로 기록하는 함수와 사용자별
+SHA-256 조회 인덱스만 추가합니다. 기존 RLS와 Private Storage 정책은 유지됩니다.
+
 ## 1. 환경변수 연결
 
 프로젝트 루트에서 예시 파일을 복사합니다.

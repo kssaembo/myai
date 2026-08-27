@@ -1,6 +1,6 @@
 # Personal AI Knowledge OS
 
-Current checkpoint: **Phase 1 Step 4 — Taxonomy and Knowledge Item CRUD**.
+Current checkpoint: **Phase 1 Step 5 — File Storage and Document Version**.
 
 개인이 장기간 축적하는 문서, 프로젝트, 아이디어와 그 근거를 관리하기 위한 Personal AI Knowledge OS입니다.
 

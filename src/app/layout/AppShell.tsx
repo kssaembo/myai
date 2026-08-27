@@ -215,8 +215,8 @@ export function AppShell() {
             <button
               className="header-button"
               type="button"
-              disabled
-              title="파일 업로드는 Step 5에서 활성화됩니다"
+              onClick={() => void navigate('/imports')}
+              title="원본 파일 업로드"
             >
               업로드
             </button>

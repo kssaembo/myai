@@ -504,6 +504,40 @@ export type Database = {
     }
     Views: EmptySchema
     Functions: {
+      add_document_version: {
+        Args: {
+          p_content_hash: string
+          p_document_id: string
+          p_format: DocumentFormat
+          p_mime_type: string
+          p_raw_markdown: string | null
+          p_size_bytes: number
+          p_source_filename: string
+          p_storage_path: string
+          p_version_id: string
+        }
+        Returns: number
+      }
+      create_document_upload: {
+        Args: {
+          p_category_id: string | null
+          p_content_hash: string
+          p_document_kind: DocumentKind
+          p_format: DocumentFormat
+          p_is_editable: boolean
+          p_item_id: string
+          p_mime_type: string
+          p_raw_markdown: string | null
+          p_size_bytes: number
+          p_source_filename: string
+          p_storage_path: string
+          p_summary: string
+          p_tag_ids: string[]
+          p_title: string
+          p_version_id: string
+        }
+        Returns: string
+      }
       normalize_lookup_text: {
         Args: { input_value: string }
         Returns: string

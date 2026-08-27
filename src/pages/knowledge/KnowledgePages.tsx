@@ -13,6 +13,7 @@ import {
 } from '@/entities/knowledge-item/api'
 import { readTaxonomy, type Category, type NodeType, type Tag } from '@/entities/taxonomy/api'
 import { useAuth } from '@/features/auth/auth-context'
+import { DocumentDetailView } from '@/pages/documents/DocumentDetailView'
 import {
   formatDate,
   friendlyDataError,
@@ -371,7 +372,7 @@ export function KnowledgeFormPage() {
       try {
         const taxonomy = await readTaxonomy()
         if (!active) return
-        const allowedTypes = taxonomy.nodeTypes.filter((type) => type.key !== 'document')
+        let allowedTypes = taxonomy.nodeTypes.filter((type) => type.key !== 'document')
         setNodeTypes(allowedTypes)
         setCategories(taxonomy.categories.filter((category) => !category.is_archived))
         setTags(taxonomy.tags)
@@ -379,6 +380,8 @@ export function KnowledgeFormPage() {
         if (itemId) {
           const record = await getKnowledge(itemId)
           if (!active) return
+          if (record.nodeType.key === 'document') allowedTypes = [...allowedTypes, record.nodeType]
+          setNodeTypes(allowedTypes)
           setForm({
             nodeTypeId: record.node_type_id,
             title: record.title,
@@ -746,6 +749,8 @@ export function KnowledgeDetailPage() {
         onAction={() => void navigate('/knowledge')}
       />
     )
+
+  if (record.nodeType.key === 'document') return <DocumentDetailView record={record} />
 
   return (
     <section className="page-section detail-page">

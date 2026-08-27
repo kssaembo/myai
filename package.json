@@ -27,8 +27,9 @@
     "db:test": "supabase test db",
     "db:types": "node scripts/generate-database-types.mjs",
     "verify:foundation-contract": "node scripts/verify-foundation-contract.mjs",
+    "verify:step5-contract": "node scripts/verify-step5-contract.mjs",
     "verify:supabase": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.verification.local scripts/verify-supabase-foundation.mjs",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run verify:foundation-contract && npm run build"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run verify:foundation-contract && npm run verify:step5-contract && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",

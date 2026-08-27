@@ -5,6 +5,7 @@ import { AuthProvider } from '@/features/auth/AuthProvider'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
+import { ImportsPage } from '@/pages/imports/ImportsPage'
 import {
   KnowledgeDetailPage,
   KnowledgeFormPage,
@@ -39,16 +40,7 @@ export function App() {
                   />
                 }
               />
-              <Route
-                path="imports"
-                element={
-                  <SectionPlaceholderPage
-                    eyebrow="Imports"
-                    title="가져오기"
-                    description="MD·TXT·PDF·DOCX 업로드와 파싱은 Phase 1 Step 5 이후에 연결됩니다."
-                  />
-                }
-              />
+              <Route path="imports" element={<ImportsPage />} />
               <Route path="settings/taxonomy" element={<TaxonomyPage />} />
             </Route>
           </Route>
