@@ -2,6 +2,16 @@
 
 이 문서는 Phase 1 Step 2를 호스팅된 Supabase 프로젝트에 안전하게 반영하는 절차입니다. 클라이언트에는 Project URL과 **publishable key**만 사용합니다. secret key, legacy `service_role` key와 Database password는 `.env.local`에 넣지 않습니다.
 
+## Step 8 추가 Migration
+
+Step 7까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.
+
+```text
+supabase/migrations/20260827000500_ref_structuring.sql
+```
+
+이 Migration은 REF Section 별칭 기록과 사용자가 검토한 Node·Evidence·Relation을 원자적으로 저장하는 RLS-aware RPC를 추가합니다. 원본 Document Version은 수정하지 않습니다.
+
 ## Step 7 추가 Migration
 
 Step 6까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.

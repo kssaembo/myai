@@ -1,12 +1,12 @@
 # Personal AI Knowledge OS
 
-Current checkpoint: **Phase 1 Step 7 — Batch and ZIP Import Jobs**.
+Current checkpoint: **Phase 1 Step 8 — REF Profile and Rule Structuring**.
 
 개인이 장기간 축적하는 문서, 프로젝트, 아이디어와 그 근거를 관리하기 위한 Personal AI Knowledge OS입니다.
 
-현재는 로그인과 보호 Route, Taxonomy·Knowledge CRUD, Private 원본 업로드·Version 관리, 본문·Section 추출에 더해 여러 파일과 ZIP/REF ZIP 일괄 Import Job까지 구성했습니다.
+현재는 로그인, Taxonomy·Knowledge CRUD, Private 원본·Version, 본문·Section 추출, ZIP Import에 더해 REF 판별·규칙 구조화·Evidence 기반 검토까지 구성했습니다.
 
-REF 판별·구조화, 검색, Graph, AI/RAG, Memory 기능은 아직 구현하지 않았습니다.
+검색, Graph, AI/RAG, Memory 기능은 아직 구현하지 않았습니다.
 
 ## 요구 환경
 
@@ -56,4 +56,4 @@ npm run check
 
 ## 다음 단계 경계
 
-Step 7 Gate는 실제 배포 환경에서 성공·실패·중복·미지원 파일이 섞인 Job을 실행하고, 한 Entry 실패 후에도 나머지 파일이 완료되는지 확인해야 통과합니다. 다음 Step 8에서는 REF 판별·구조화와 검토 흐름을 구현합니다.
+Step 8 Gate는 서로 다른 REF 문서 5개에서 Section coverage와 Node·Relation·Evidence 제안을 사람이 검토하고, 원문과 일치하는지 확인해야 통과합니다. 자동 AI 분석은 사용하지 않습니다.

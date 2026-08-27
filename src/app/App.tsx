@@ -11,6 +11,7 @@ import {
   KnowledgeFormPage,
   KnowledgeListPage,
 } from '@/pages/knowledge/KnowledgePages'
+import { RefReviewPage } from '@/pages/ref-review/RefReviewPage'
 import { TaxonomyPage } from '@/pages/settings/TaxonomyPage'
 import { SectionPlaceholderPage } from '@/shared/ui/SectionPlaceholderPage'
 import '@/styles/global.css'
@@ -26,6 +27,7 @@ export function App() {
               <Route index element={<DashboardPage />} />
               <Route path="knowledge" element={<KnowledgeListPage />} />
               <Route path="knowledge/new" element={<KnowledgeFormPage />} />
+              <Route path="knowledge/:itemId/ref-review" element={<RefReviewPage />} />
               <Route path="knowledge/:itemId" element={<KnowledgeDetailPage />} />
               <Route path="knowledge/:itemId/edit" element={<KnowledgeFormPage />} />
               <Route path="projects" element={<KnowledgeListPage projectOnly />} />

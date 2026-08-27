@@ -579,6 +579,23 @@ export type Database = {
         Args: { p_job_id: string }
         Returns: undefined
       }
+      mark_ref_profile: {
+        Args: {
+          p_aliases: Json
+          p_profile: string
+          p_version_id: string
+        }
+        Returns: number
+      }
+      commit_ref_review: {
+        Args: {
+          p_document_id: string
+          p_nodes: Json
+          p_relations: Json
+          p_version_id: string
+        }
+        Returns: Json
+      }
       normalize_lookup_text: {
         Args: { input_value: string }
         Returns: string
