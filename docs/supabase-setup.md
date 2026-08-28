@@ -2,6 +2,15 @@
 
 이 문서는 Phase 1 Step 2를 호스팅된 Supabase 프로젝트에 안전하게 반영하는 절차입니다. 클라이언트에는 Project URL과 **publishable key**만 사용합니다. secret key, legacy `service_role` key와 Database password는 `.env.local`에 넣지 않습니다.
 
+## V2 Step 1 — Gemini Server Gateway
+
+V1 Step 13까지 적용했다면 다음 migration을 실행하고 별도 가이드에 따라 Edge Function Secret과 배포를 진행합니다.
+
+```text
+supabase/migrations/20260828000200_ai_provider_foundation.sql
+docs/gemini-edge-function-setup.md
+```
+
 ## Step 13 추가 Migration
 
 Step 12까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.

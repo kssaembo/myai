@@ -1,12 +1,12 @@
 # Personal AI Knowledge OS
 
-Current checkpoint: **Phase 1 Step 13 — V1 Export, Trash, Hardening and Final Verification**.
+Current checkpoint: **Phase 2 Step 1 — AI Provider Foundation**.
 
 개인이 장기간 축적하는 문서, 프로젝트, 아이디어와 그 근거를 관리하기 위한 Personal AI Knowledge OS입니다.
 
-현재는 로그인부터 Project 집계, Relation·Evidence 편집, Node 병합, Knowledge Graph, Export와 복구 가능한 휴지통까지 V1 기능을 구성했습니다.
+V1 지식 저장·검색·Graph·Export 기반 위에 Gemini를 안전하게 호출하는 서버 Gateway, 사용자 인증, 무료 사용 보호 한도와 Provider 교체 경계를 추가했습니다.
 
-AI/RAG와 Memory 기능은 아직 구현하지 않았습니다.
+Jarvis 대화, RAG, Embedding과 Memory 기능은 아직 구현하지 않았습니다.
 
 ## 요구 환경
 
@@ -57,4 +57,4 @@ npm run check
 
 ## 다음 단계 경계
 
-Step 13 코드 Gate는 Export·휴지통·보안 회귀 검사까지 포함합니다. V1 운영 Gate는 실제 Supabase에서 RLS/Storage 검사를 통과하고 전체 20개 REF corpus를 Import·구조화·검색·Graph·Export까지 검증하는 것입니다. AI 분석과 Vector Search는 V2에서 진행합니다.
+V2 Step 1 Gate는 API 키가 브라우저에 노출되지 않고, 로그인 사용자만 서버 Gateway를 통해 Gemini 연결 테스트를 수행하며 앱 내부 일일 한도가 기록되는 것입니다. 다음 단계부터 근거 검색과 Jarvis 대화 화면을 구현합니다.
