@@ -84,6 +84,19 @@ export function friendlyDataError(error: unknown) {
     message.includes('permanently_delete_knowledge_item')
   )
     return 'Step 13 SQL Migration을 먼저 Supabase에 적용해 주세요.'
+  if (
+    message.includes('get_ai_status') ||
+    message.includes('reserve_ai_request') ||
+    message.includes('complete_ai_request')
+  )
+    return 'V2 Step 1 SQL Migration을 먼저 Supabase에 적용해 주세요.'
+  if (message.includes('AI_DAILY_REQUEST_LIMIT'))
+    return '오늘의 AI 요청 한도에 도달했습니다. 내일 다시 사용할 수 있습니다.'
+  if (message.includes('AI_DAILY_TOKEN_LIMIT')) return '오늘의 AI 입력 Token 한도에 도달했습니다.'
+  if (message.includes('GEMINI_API_KEY_NOT_CONFIGURED'))
+    return 'Supabase Edge Function Secret에 GEMINI_API_KEY를 등록해 주세요.'
+  if (message.includes('FunctionsHttpError') || message.includes('AI_CONNECTIVITY_TEST_FAILED'))
+    return 'AI 서버 연결에 실패했습니다. Edge Function 배포와 Secret 설정을 확인해 주세요.'
   if (message.includes('DUPLICATE_ACTIVE_RELATION')) return '같은 활성 Relation이 이미 있습니다.'
   if (
     message.includes('RELATION_SOURCE_TYPE_NOT_ALLOWED') ||

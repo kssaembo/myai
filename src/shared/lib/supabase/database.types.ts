@@ -311,6 +311,42 @@ type ImportEntryRow = {
   updated_at: string
 }
 
+type AIProviderSettingsRow = {
+  owner_id: string
+  provider: string
+  chat_model: string
+  embedding_model: string
+  daily_request_limit: number
+  daily_input_token_limit: number
+  is_enabled: boolean
+  updated_at: string
+}
+
+type AIUsageDailyRow = {
+  owner_id: string
+  usage_date: string
+  request_count: number
+  input_tokens: number
+  output_tokens: number
+  updated_at: string
+}
+
+type AIRunRow = {
+  id: string
+  owner_id: string
+  provider: string
+  model: string
+  purpose: string
+  status: string
+  estimated_input_tokens: number
+  input_tokens: number
+  output_tokens: number
+  duration_ms: number | null
+  error_code: string | null
+  created_at: string
+  completed_at: string | null
+}
+
 export type SearchKnowledgeRow = {
   item_id: string
   section_id: string | null
@@ -528,6 +564,21 @@ export type Database = {
         >,
         UpdateRow<ImportEntryRow, 'id' | 'owner_id' | 'import_job_id' | 'created_at' | 'updated_at'>
       >
+      ai_provider_settings: TableDefinition<
+        AIProviderSettingsRow,
+        InsertRow<AIProviderSettingsRow, 'owner_id', 'updated_at'>,
+        UpdateRow<AIProviderSettingsRow, 'owner_id' | 'updated_at'>
+      >
+      ai_usage_daily: TableDefinition<
+        AIUsageDailyRow,
+        InsertRow<AIUsageDailyRow, 'owner_id', 'usage_date' | 'updated_at'>,
+        UpdateRow<AIUsageDailyRow, 'owner_id' | 'usage_date' | 'updated_at'>
+      >
+      ai_runs: TableDefinition<
+        AIRunRow,
+        InsertRow<AIRunRow, 'owner_id' | 'provider' | 'model' | 'purpose', 'id' | 'created_at'>,
+        UpdateRow<AIRunRow, 'id' | 'owner_id' | 'created_at'>
+      >
     }
     Views: EmptySchema
     Functions: {
@@ -670,6 +721,27 @@ export type Database = {
       trash_knowledge_item: { Args: { p_item_id: string }; Returns: undefined }
       restore_knowledge_item: { Args: { p_item_id: string }; Returns: undefined }
       permanently_delete_knowledge_item: { Args: { p_item_id: string }; Returns: Json }
+      get_ai_status: { Args: Record<never, never>; Returns: Json }
+      reserve_ai_request: {
+        Args: {
+          p_provider: string
+          p_model: string
+          p_purpose: string
+          p_estimated_input_tokens: number
+        }
+        Returns: Json
+      }
+      complete_ai_request: {
+        Args: {
+          p_run_id: string
+          p_status: string
+          p_input_tokens: number
+          p_output_tokens: number
+          p_duration_ms: number
+          p_error_code?: string | null
+        }
+        Returns: undefined
+      }
       normalize_lookup_text: {
         Args: { input_value: string }
         Returns: string

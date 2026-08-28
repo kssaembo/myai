@@ -23,6 +23,7 @@ const pageTitles: Record<string, string> = {
   '/imports': 'Imports',
   '/search': 'Search',
   '/settings/taxonomy': 'Settings',
+  '/settings/ai': 'AI Settings',
   '/trash': 'Trash',
 }
 
@@ -163,7 +164,7 @@ export function AppShell() {
           ))}
           <p className="navigation-label settings-label">System</p>
           <NavLink
-            to="/settings/taxonomy"
+            to="/settings/ai"
             onClick={() => setIsSidebarOpen(false)}
             className={({ isActive }) => `navigation-link${isActive ? ' active' : ''}`}
           >

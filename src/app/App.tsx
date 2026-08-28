@@ -16,6 +16,7 @@ import {
 import { RefReviewPage } from '@/pages/ref-review/RefReviewPage'
 import { SearchPage } from '@/pages/search/SearchPage'
 import { TaxonomyPage } from '@/pages/settings/TaxonomyPage'
+import { AISettingsPage } from '@/pages/settings/AISettingsPage'
 import { TrashPage } from '@/pages/trash/TrashPage'
 import '@/styles/global.css'
 
@@ -40,6 +41,7 @@ export function App() {
               <Route path="imports" element={<ImportsPage />} />
               <Route path="search" element={<SearchPage />} />
               <Route path="settings/taxonomy" element={<TaxonomyPage />} />
+              <Route path="settings/ai" element={<AISettingsPage />} />
               <Route path="trash" element={<TrashPage />} />
             </Route>
           </Route>
