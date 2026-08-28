@@ -2,6 +2,16 @@
 
 이 문서는 Phase 1 Step 2를 호스팅된 Supabase 프로젝트에 안전하게 반영하는 절차입니다. 클라이언트에는 Project URL과 **publishable key**만 사용합니다. secret key, legacy `service_role` key와 Database password는 `.env.local`에 넣지 않습니다.
 
+## Step 13 추가 Migration
+
+Step 12까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.
+
+```text
+supabase/migrations/20260828000100_export_trash_hardening.sql
+```
+
+적용 후 Knowledge 상세에서 Markdown·JSON Export와 휴지통 이동을 확인합니다. Trash 메뉴에서는 복원과 제목 재입력 후 영구 삭제를 검증합니다. Document 원본은 Version 영역에서 별도로 내려받습니다.
+
 ## Step 12 추가 Migration
 
 Step 11까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.
