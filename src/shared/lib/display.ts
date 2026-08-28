@@ -77,6 +77,13 @@ export function friendlyDataError(error: unknown) {
     return 'Step 11 SQL Migration을 먼저 Supabase에 적용해 주세요.'
   if (message.includes('get_knowledge_graph'))
     return 'Step 12 SQL Migration을 먼저 Supabase에 적용해 주세요.'
+  if (
+    message.includes('export_knowledge_item') ||
+    message.includes('trash_knowledge_item') ||
+    message.includes('restore_knowledge_item') ||
+    message.includes('permanently_delete_knowledge_item')
+  )
+    return 'Step 13 SQL Migration을 먼저 Supabase에 적용해 주세요.'
   if (message.includes('DUPLICATE_ACTIVE_RELATION')) return '같은 활성 Relation이 이미 있습니다.'
   if (
     message.includes('RELATION_SOURCE_TYPE_NOT_ALLOWED') ||

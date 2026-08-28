@@ -92,6 +92,17 @@ export async function listKnowledge(
   return options.projectOnly ? records.filter((item) => item.nodeType.key === 'project') : records
 }
 
+export async function listTrash() {
+  const { data, error } = await supabase
+    .from('knowledge_items')
+    .select('*')
+    .not('deleted_at', 'is', null)
+    .is('merged_into_id', null)
+    .order('deleted_at', { ascending: false })
+  throwIfError(error)
+  return readRecords(data ?? [])
+}
+
 export async function getKnowledge(id: string) {
   const { data, error } = await supabase
     .from('knowledge_items')

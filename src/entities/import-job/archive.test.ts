@@ -1,7 +1,14 @@
 import { BlobWriter, TextReader, ZipWriter } from '@zip.js/zip.js'
 import { describe, expect, it } from 'vitest'
 
-import { ArchiveValidationError, normalizeSafePath, prepareArchive, prepareFiles } from './archive'
+import {
+  ArchiveValidationError,
+  MAX_EXPANDED_BYTES,
+  normalizeSafePath,
+  prepareArchive,
+  prepareFiles,
+  validateArchiveEntryMetadata,
+} from './archive'
 
 if (!Blob.prototype.stream) {
   Blob.prototype.stream = function stream() {
@@ -49,5 +56,17 @@ describe('batch import archive safety', () => {
     expect(markdown?.relativePath).toBe('refs/REF_SECRET.md')
     expect(await (await markdown?.loadFile())?.text()).toBe('# 비밀 숫자')
     await prepared.dispose()
+  })
+
+  it('rejects nested, encrypted, symlink, and expansion-bomb entries', () => {
+    const base = { filename: 'safe.md', uncompressedSize: 10 }
+    for (const entry of [
+      { ...base, filename: 'nested.zip' },
+      { ...base, encrypted: true },
+      { ...base, symlink: true },
+      { ...base, uncompressedSize: MAX_EXPANDED_BYTES + 1 },
+    ]) {
+      expect(() => validateArchiveEntryMetadata([entry])).toThrow(ArchiveValidationError)
+    }
   })
 })

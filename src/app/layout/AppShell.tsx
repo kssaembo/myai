@@ -3,7 +3,8 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '@/features/auth/auth-context'
 
-type IconName = 'dashboard' | 'search' | 'knowledge' | 'projects' | 'graph' | 'imports' | 'settings'
+type IconName =
+  'dashboard' | 'search' | 'knowledge' | 'projects' | 'graph' | 'imports' | 'settings' | 'trash'
 
 const navigation: { label: string; to: string; icon: IconName; end?: boolean }[] = [
   { label: 'Dashboard', to: '/', icon: 'dashboard', end: true },
@@ -22,6 +23,7 @@ const pageTitles: Record<string, string> = {
   '/imports': 'Imports',
   '/search': 'Search',
   '/settings/taxonomy': 'Settings',
+  '/trash': 'Trash',
 }
 
 function getPageTitle(pathname: string) {
@@ -77,6 +79,12 @@ function NavigationIcon({ name }: { name: IconName }) {
       <>
         <circle cx="12" cy="12" r="3" />
         <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" />
+      </>
+    ),
+    trash: (
+      <>
+        <path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14" />
+        <path d="M10 11v6M14 11v6" />
       </>
     ),
   }
@@ -161,6 +169,14 @@ export function AppShell() {
           >
             <NavigationIcon name="settings" />
             <span>Settings</span>
+          </NavLink>
+          <NavLink
+            to="/trash"
+            onClick={() => setIsSidebarOpen(false)}
+            className={({ isActive }) => `navigation-link${isActive ? ' active' : ''}`}
+          >
+            <NavigationIcon name="trash" />
+            <span>Trash</span>
           </NavLink>
         </nav>
 

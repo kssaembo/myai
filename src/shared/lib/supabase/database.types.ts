@@ -666,6 +666,10 @@ export type Database = {
         Args: { p_limit?: number; p_offset?: number; p_project_id?: string | null }
         Returns: Json
       }
+      export_knowledge_item: { Args: { p_item_id: string }; Returns: Json }
+      trash_knowledge_item: { Args: { p_item_id: string }; Returns: undefined }
+      restore_knowledge_item: { Args: { p_item_id: string }; Returns: undefined }
+      permanently_delete_knowledge_item: { Args: { p_item_id: string }; Returns: Json }
       normalize_lookup_text: {
         Args: { input_value: string }
         Returns: string

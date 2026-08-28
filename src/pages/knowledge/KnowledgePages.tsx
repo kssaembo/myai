@@ -13,6 +13,7 @@ import {
 } from '@/entities/knowledge-item/api'
 import { readTaxonomy, type Category, type NodeType, type Tag } from '@/entities/taxonomy/api'
 import { useAuth } from '@/features/auth/auth-context'
+import { KnowledgeUtilityBar } from '@/features/knowledge/KnowledgeUtilityBar'
 import { DocumentDetailView } from '@/pages/documents/DocumentDetailView'
 import { ProjectDetailView } from '@/pages/projects/ProjectDetailView'
 import {
@@ -751,190 +752,207 @@ export function KnowledgeDetailPage() {
       />
     )
 
-  if (record.nodeType.key === 'document') return <DocumentDetailView record={record} />
+  if (record.nodeType.key === 'document')
+    return (
+      <>
+        <KnowledgeUtilityBar record={record} />
+        <DocumentDetailView record={record} />
+      </>
+    )
   if (record.nodeType.key === 'project')
-    return <ProjectDetailView record={record} onChanged={load} />
+    return (
+      <>
+        <KnowledgeUtilityBar record={record} />
+        <ProjectDetailView record={record} onChanged={load} />
+      </>
+    )
 
   return (
-    <section className="page-section detail-page">
-      <nav className="breadcrumb">
-        <Link to="/knowledge">Knowledge</Link>
-        <span>/</span>
-        <span>{record.title}</span>
-      </nav>
-      <header className="detail-hero content-card">
-        <div>
-          <div className="detail-badges">
-            <TypeBadge record={record} />
-            <span className={`status-chip status-${record.status}`}>
-              {itemStatusLabels[record.status]}
-            </span>
-            <span className="status-chip">{verificationLabels[record.verification_status]}</span>
+    <>
+      <KnowledgeUtilityBar record={record} />
+      <section className="page-section detail-page">
+        <nav className="breadcrumb">
+          <Link to="/knowledge">Knowledge</Link>
+          <span>/</span>
+          <span>{record.title}</span>
+        </nav>
+        <header className="detail-hero content-card">
+          <div>
+            <div className="detail-badges">
+              <TypeBadge record={record} />
+              <span className={`status-chip status-${record.status}`}>
+                {itemStatusLabels[record.status]}
+              </span>
+              <span className="status-chip">{verificationLabels[record.verification_status]}</span>
+            </div>
+            <h1>{record.title}</h1>
+            <p>{record.summary ?? '요약이 아직 없습니다.'}</p>
           </div>
-          <h1>{record.title}</h1>
-          <p>{record.summary ?? '요약이 아직 없습니다.'}</p>
-        </div>
-        <div className="detail-actions">
-          <Link className="secondary-button" to={`/knowledge/${record.id}/connections`}>
-            Relation · Evidence
-          </Link>
-          <Link className="secondary-button" to={`/knowledge/${record.id}/edit`}>
-            수정
-          </Link>
-          <button
-            className="secondary-button danger-outline"
-            type="button"
-            onClick={() => setShowArchive(true)}
-          >
-            {record.status === 'archived' ? '복원' : '보관'}
-          </button>
-        </div>
-      </header>
-      <div className="detail-grid">
-        <article className="content-card detail-panel">
-          <header>
-            <p className="eyebrow">Overview</p>
-            <h2>분류와 메타데이터</h2>
-          </header>
-          <dl className="metadata-list">
-            <div>
-              <dt>Category</dt>
-              <dd>{record.category?.name ?? '미분류'}</dd>
-            </div>
-            <div>
-              <dt>Tags</dt>
-              <dd>
-                {record.tags.length ? record.tags.map((tag) => `#${tag.name}`).join(' · ') : '없음'}
-              </dd>
-            </div>
-            <div>
-              <dt>중요도</dt>
-              <dd>{record.importance} / 5</dd>
-            </div>
-            <div>
-              <dt>생성 출처</dt>
-              <dd>직접 작성</dd>
-            </div>
-            <div>
-              <dt>최근 수정</dt>
-              <dd>{formatDate(record.updated_at)}</dd>
-            </div>
-          </dl>
-        </article>
-        <article className="content-card detail-panel">
-          <header>
-            <p className="eyebrow">Evidence</p>
-            <h2>근거</h2>
-          </header>
-          <div className="quiet-empty">
-            <strong>직접 작성한 Node입니다</strong>
-            <p>
-              연결된 원문 Evidence가 없습니다. 파일 가져오기와 Evidence 연결은 이후 단계에서
-              제공됩니다.
-            </p>
+          <div className="detail-actions">
+            <Link className="secondary-button" to={`/knowledge/${record.id}/connections`}>
+              Relation · Evidence
+            </Link>
+            <Link className="secondary-button" to={`/knowledge/${record.id}/edit`}>
+              수정
+            </Link>
+            <button
+              className="secondary-button danger-outline"
+              type="button"
+              onClick={() => setShowArchive(true)}
+            >
+              {record.status === 'archived' ? '복원' : '보관'}
+            </button>
           </div>
-        </article>
-        {record.project && (
-          <article className="content-card detail-panel wide-panel">
+        </header>
+        <div className="detail-grid">
+          <article className="content-card detail-panel">
             <header>
-              <p className="eyebrow">Project Extension</p>
-              <h2>프로젝트 정보</h2>
+              <p className="eyebrow">Overview</p>
+              <h2>분류와 메타데이터</h2>
             </header>
-            <dl className="metadata-list project-metadata">
+            <dl className="metadata-list">
               <div>
-                <dt>종류</dt>
-                <dd>{projectKindLabels[record.project.project_kind]}</dd>
+                <dt>Category</dt>
+                <dd>{record.category?.name ?? '미분류'}</dd>
               </div>
               <div>
-                <dt>Lifecycle</dt>
-                <dd>{lifecycleLabels[record.project.lifecycle_status]}</dd>
-              </div>
-              <div>
-                <dt>기간</dt>
+                <dt>Tags</dt>
                 <dd>
-                  {record.project.started_at ?? '미정'} — {record.project.completed_at ?? '진행 중'}
+                  {record.tags.length
+                    ? record.tags.map((tag) => `#${tag.name}`).join(' · ')
+                    : '없음'}
                 </dd>
               </div>
               <div>
-                <dt>현재 버전</dt>
-                <dd>{record.project.current_version_label ?? '미기록'}</dd>
+                <dt>중요도</dt>
+                <dd>{record.importance} / 5</dd>
               </div>
-              {record.project.repository_url && (
-                <div>
-                  <dt>저장소</dt>
-                  <dd>
-                    <a href={record.project.repository_url} target="_blank" rel="noreferrer">
-                      링크 열기
-                    </a>
-                  </dd>
-                </div>
-              )}
-              {record.project.service_url && (
-                <div>
-                  <dt>서비스</dt>
-                  <dd>
-                    <a href={record.project.service_url} target="_blank" rel="noreferrer">
-                      링크 열기
-                    </a>
-                  </dd>
-                </div>
-              )}
+              <div>
+                <dt>생성 출처</dt>
+                <dd>직접 작성</dd>
+              </div>
+              <div>
+                <dt>최근 수정</dt>
+                <dd>{formatDate(record.updated_at)}</dd>
+              </div>
             </dl>
           </article>
-        )}
-        <article className="content-card detail-panel wide-panel">
-          <header>
-            <p className="eyebrow">Connections</p>
-            <h2>관계와 관련 Project</h2>
-          </header>
-          <div className="quiet-empty">
-            <strong>Relation과 Evidence 관리</strong>
-            <p>
-              허용된 유형의 Relation을 만들고 원문 Evidence를 연결하거나 중복 Node를 병합할 수
-              있습니다.
-            </p>
-            <Link className="secondary-button" to={`/knowledge/${record.id}/connections`}>
-              연결 관리 열기
-            </Link>
-          </div>
-        </article>
-      </div>
-      {showArchive && (
-        <div className="modal-backdrop">
-          <div className="confirm-modal" role="dialog" aria-modal="true">
-            <h2>{record.status === 'archived' ? '항목을 복원할까요?' : '항목을 보관할까요?'}</h2>
-            <p>원본 데이터는 삭제되지 않습니다.</p>
-            <div className="modal-actions">
-              <button
-                className="secondary-button"
-                onClick={() => setShowArchive(false)}
-                type="button"
-              >
-                취소
-              </button>
-              <button
-                className="primary-button"
-                type="button"
-                onClick={() =>
-                  void (async () => {
-                    try {
-                      if (record.status === 'archived') await restoreKnowledge(record.id)
-                      else await archiveKnowledge(record.id)
-                      setShowArchive(false)
-                      await load()
-                    } catch (caught) {
-                      setShowArchive(false)
-                      setError(friendlyDataError(caught))
-                    }
-                  })()
-                }
-              >
-                {record.status === 'archived' ? '복원' : '보관'}
-              </button>
+          <article className="content-card detail-panel">
+            <header>
+              <p className="eyebrow">Evidence</p>
+              <h2>근거</h2>
+            </header>
+            <div className="quiet-empty">
+              <strong>직접 작성한 Node입니다</strong>
+              <p>
+                연결된 원문 Evidence가 없습니다. 파일 가져오기와 Evidence 연결은 이후 단계에서
+                제공됩니다.
+              </p>
+            </div>
+          </article>
+          {record.project && (
+            <article className="content-card detail-panel wide-panel">
+              <header>
+                <p className="eyebrow">Project Extension</p>
+                <h2>프로젝트 정보</h2>
+              </header>
+              <dl className="metadata-list project-metadata">
+                <div>
+                  <dt>종류</dt>
+                  <dd>{projectKindLabels[record.project.project_kind]}</dd>
+                </div>
+                <div>
+                  <dt>Lifecycle</dt>
+                  <dd>{lifecycleLabels[record.project.lifecycle_status]}</dd>
+                </div>
+                <div>
+                  <dt>기간</dt>
+                  <dd>
+                    {record.project.started_at ?? '미정'} —{' '}
+                    {record.project.completed_at ?? '진행 중'}
+                  </dd>
+                </div>
+                <div>
+                  <dt>현재 버전</dt>
+                  <dd>{record.project.current_version_label ?? '미기록'}</dd>
+                </div>
+                {record.project.repository_url && (
+                  <div>
+                    <dt>저장소</dt>
+                    <dd>
+                      <a href={record.project.repository_url} target="_blank" rel="noreferrer">
+                        링크 열기
+                      </a>
+                    </dd>
+                  </div>
+                )}
+                {record.project.service_url && (
+                  <div>
+                    <dt>서비스</dt>
+                    <dd>
+                      <a href={record.project.service_url} target="_blank" rel="noreferrer">
+                        링크 열기
+                      </a>
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </article>
+          )}
+          <article className="content-card detail-panel wide-panel">
+            <header>
+              <p className="eyebrow">Connections</p>
+              <h2>관계와 관련 Project</h2>
+            </header>
+            <div className="quiet-empty">
+              <strong>Relation과 Evidence 관리</strong>
+              <p>
+                허용된 유형의 Relation을 만들고 원문 Evidence를 연결하거나 중복 Node를 병합할 수
+                있습니다.
+              </p>
+              <Link className="secondary-button" to={`/knowledge/${record.id}/connections`}>
+                연결 관리 열기
+              </Link>
+            </div>
+          </article>
+        </div>
+        {showArchive && (
+          <div className="modal-backdrop">
+            <div className="confirm-modal" role="dialog" aria-modal="true">
+              <h2>{record.status === 'archived' ? '항목을 복원할까요?' : '항목을 보관할까요?'}</h2>
+              <p>원본 데이터는 삭제되지 않습니다.</p>
+              <div className="modal-actions">
+                <button
+                  className="secondary-button"
+                  onClick={() => setShowArchive(false)}
+                  type="button"
+                >
+                  취소
+                </button>
+                <button
+                  className="primary-button"
+                  type="button"
+                  onClick={() =>
+                    void (async () => {
+                      try {
+                        if (record.status === 'archived') await restoreKnowledge(record.id)
+                        else await archiveKnowledge(record.id)
+                        setShowArchive(false)
+                        await load()
+                      } catch (caught) {
+                        setShowArchive(false)
+                        setError(friendlyDataError(caught))
+                      }
+                    })()
+                  }
+                >
+                  {record.status === 'archived' ? '복원' : '보관'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </section>
+        )}
+      </section>
+    </>
   )
 }

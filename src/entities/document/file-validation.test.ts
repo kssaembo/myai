@@ -4,6 +4,8 @@ import {
   detectDocumentFormat,
   FileValidationError,
   titleFromFilename,
+  MAX_DOCUMENT_BYTES,
+  validateDocumentFile,
   validateFileBytes,
 } from './file-validation'
 
@@ -41,5 +43,14 @@ describe('document file validation', () => {
     expect(titleFromFilename('REF_SECRET_NUMBER_CLASSROOM_EDITION.md')).toBe(
       'REF_SECRET_NUMBER_CLASSROOM_EDITION',
     )
+  })
+
+  it('rejects a file over 50 MiB before reading its contents', async () => {
+    const oversized = {
+      name: 'oversized.md',
+      type: 'text/markdown',
+      size: MAX_DOCUMENT_BYTES + 1,
+    } as File
+    await expect(validateDocumentFile(oversized)).rejects.toMatchObject({ code: 'FILE_TOO_LARGE' })
   })
 })

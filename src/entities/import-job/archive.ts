@@ -1,4 +1,4 @@
-import { BlobReader, ZipReader } from '@zip.js/zip.js'
+import { BlobReader, type Entry, type FileEntry, ZipReader } from '@zip.js/zip.js'
 
 import { detectDocumentFormat } from '@/entities/document/file-validation'
 import type { DocumentFormat, ImportType } from '@/shared/lib/supabase/database.types'
@@ -30,6 +30,42 @@ export class ArchiveValidationError extends Error {
     super(message)
     this.code = code
   }
+}
+
+export interface ArchiveEntryMetadata {
+  filename: string
+  directory?: boolean
+  encrypted?: boolean
+  symlink?: boolean
+  uncompressedSize: number
+}
+
+export function validateArchiveEntryMetadata<T extends ArchiveEntryMetadata>(allEntries: T[]): T[] {
+  const entries = allEntries.filter((entry) => !entry.directory)
+  if (!entries.length || entries.length > MAX_IMPORT_ENTRIES) {
+    throw new ArchiveValidationError(
+      'IMPORT_ENTRY_COUNT_OUT_OF_RANGE',
+      `ZIP 내부 파일은 1개부터 ${MAX_IMPORT_ENTRIES}개까지 지원합니다.`,
+    )
+  }
+  if (entries.some((entry) => entry.encrypted))
+    throw new ArchiveValidationError('ENCRYPTED_ZIP', '암호화된 ZIP은 지원하지 않습니다.')
+  if (entries.some((entry) => entry.symlink))
+    throw new ArchiveValidationError('ZIP_SYMLINK', '심볼릭 링크가 포함된 ZIP은 지원하지 않습니다.')
+  if (entries.some((entry) => entry.filename.toLocaleLowerCase('en-US').endsWith('.zip')))
+    throw new ArchiveValidationError('NESTED_ZIP', 'ZIP 안에 포함된 중첩 ZIP은 지원하지 않습니다.')
+  const expandedBytes = entries.reduce((sum, entry) => sum + entry.uncompressedSize, 0)
+  if (expandedBytes > MAX_EXPANDED_BYTES)
+    throw new ArchiveValidationError(
+      'ZIP_EXPANSION_LIMIT',
+      '압축 해제 크기가 500MiB를 초과해 안전을 위해 중단했습니다.',
+    )
+  for (const entry of entries) normalizeSafePath(entry.filename)
+  return entries
+}
+
+function isFileEntry(entry: Entry): entry is FileEntry {
+  return !entry.directory
 }
 
 export function normalizeSafePath(path: string) {
@@ -90,35 +126,8 @@ export async function prepareArchive(file: File, refArchive: boolean): Promise<P
   })
   try {
     const allEntries = await reader.getEntries()
-    const entries = allEntries.filter((entry) => !entry.directory)
-    if (!entries.length || entries.length > MAX_IMPORT_ENTRIES) {
-      throw new ArchiveValidationError(
-        'IMPORT_ENTRY_COUNT_OUT_OF_RANGE',
-        `ZIP 내부 파일은 1개부터 ${MAX_IMPORT_ENTRIES}개까지 지원합니다.`,
-      )
-    }
-    if (entries.some((entry) => entry.encrypted)) {
-      throw new ArchiveValidationError('ENCRYPTED_ZIP', '암호화된 ZIP은 지원하지 않습니다.')
-    }
-    if (entries.some((entry) => entry.symlink)) {
-      throw new ArchiveValidationError(
-        'ZIP_SYMLINK',
-        '심볼릭 링크가 포함된 ZIP은 지원하지 않습니다.',
-      )
-    }
-    if (entries.some((entry) => entry.filename.toLocaleLowerCase('en-US').endsWith('.zip'))) {
-      throw new ArchiveValidationError(
-        'NESTED_ZIP',
-        'ZIP 안에 포함된 중첩 ZIP은 지원하지 않습니다.',
-      )
-    }
-    const expandedBytes = entries.reduce((sum, entry) => sum + entry.uncompressedSize, 0)
-    if (expandedBytes > MAX_EXPANDED_BYTES) {
-      throw new ArchiveValidationError(
-        'ZIP_EXPANSION_LIMIT',
-        '압축 해제 크기가 500MiB를 초과해 안전을 위해 중단했습니다.',
-      )
-    }
+    validateArchiveEntryMetadata(allEntries)
+    const entries = allEntries.filter(isFileEntry)
 
     const candidates: ImportCandidate[] = entries.map((entry) => {
       const relativePath = normalizeSafePath(entry.filename)
