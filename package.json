@@ -33,18 +33,22 @@
     "verify:step8-contract": "node scripts/verify-step8-contract.mjs",
     "verify:step9-contract": "node scripts/verify-step9-contract.mjs",
     "verify:step10-contract": "node scripts/verify-step10-contract.mjs",
+    "verify:step11-contract": "node scripts/verify-step11-contract.mjs",
+    "verify:step12-contract": "node scripts/verify-step12-contract.mjs",
     "evaluate:search": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.verification.local scripts/evaluate-search.mjs",
     "verify:supabase": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.verification.local scripts/verify-supabase-foundation.mjs",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run verify:foundation-contract && npm run verify:step5-contract && npm run verify:step6-contract && npm run verify:step7-contract && npm run verify:step8-contract && npm run verify:step9-contract && npm run verify:step10-contract && npm run build"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run verify:foundation-contract && npm run verify:step5-contract && npm run verify:step6-contract && npm run verify:step7-contract && npm run verify:step8-contract && npm run verify:step9-contract && npm run verify:step10-contract && npm run verify:step11-contract && npm run verify:step12-contract && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",
     "@zip.js/zip.js": "2.8.60",
+    "graphology": "0.26.0",
     "mammoth": "1.12.1",
     "pdfjs-dist": "6.2.108",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-router-dom": "7.18.2"
+    "react-router-dom": "7.18.2",
+    "sigma": "3.0.3"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

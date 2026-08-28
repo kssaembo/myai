@@ -2,6 +2,26 @@
 
 이 문서는 Phase 1 Step 2를 호스팅된 Supabase 프로젝트에 안전하게 반영하는 절차입니다. 클라이언트에는 Project URL과 **publishable key**만 사용합니다. secret key, legacy `service_role` key와 Database password는 `.env.local`에 넣지 않습니다.
 
+## Step 12 추가 Migration
+
+Step 11까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.
+
+```text
+supabase/migrations/20260827000900_knowledge_graph.sql
+```
+
+적용 후 Graph 메뉴에서 구조화된 Project를 선택하고 Node·Relation 필터, 검색, 선택 Inspector와 100개 단위 추가 로딩을 확인합니다.
+
+## Step 11 추가 Migration
+
+Step 10까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.
+
+```text
+supabase/migrations/20260827000800_relation_evidence_merge.sql
+```
+
+적용 후 Knowledge 또는 Project 상세의 **Relation · Evidence** 버튼에서 Relation 편집, 다중 Evidence 추가, 중복 후보 병합을 검증합니다.
+
 ## Step 10 추가 Migration
 
 Step 9까지 적용했다면 SQL Editor에서 다음 파일을 전체 실행합니다.

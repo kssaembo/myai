@@ -1,12 +1,12 @@
 # Personal AI Knowledge OS
 
-Current checkpoint: **Phase 1 Step 10 — Project Detail Aggregation**.
+Current checkpoint: **Phase 1 Step 12 — Knowledge Graph**.
 
 개인이 장기간 축적하는 문서, 프로젝트, 아이디어와 그 근거를 관리하기 위한 Personal AI Knowledge OS입니다.
 
-현재는 로그인, Taxonomy·Knowledge CRUD, Private 원본·Version, 본문·Section 추출, ZIP Import, REF 규칙 구조화, 통합 검색에 더해 Project 개발 지식 집계까지 구성했습니다.
+현재는 로그인부터 Project 집계까지의 기능에 더해 Relation·Evidence 편집, Node 병합과 Project 중심 Knowledge Graph까지 구성했습니다.
 
-Graph, AI/RAG, Memory 기능은 아직 구현하지 않았습니다.
+AI/RAG와 Memory 기능은 아직 구현하지 않았습니다.
 
 ## 요구 환경
 
@@ -57,4 +57,4 @@ npm run check
 
 ## 다음 단계 경계
 
-Step 10 Gate는 독점게임 Project 한 화면에서 문서, 문제–해결, 결정, 패턴, 교훈과 각 원문 Evidence를 추적할 수 있는지 확인하는 것입니다. AI 분석과 Vector Search는 사용하지 않습니다.
+Step 12 Gate는 검토된 Relation을 Project 중심 그래프에서 검색·필터·선택하며 탐색할 수 있는지 확인하는 것입니다. 다음은 Phase 1 최종 Step 13의 Export·휴지통·보안 강화·20개 REF 검증이며, AI 분석과 Vector Search는 V2에서 진행합니다.
