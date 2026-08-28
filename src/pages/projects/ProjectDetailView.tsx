@@ -187,6 +187,9 @@ export function ProjectDetailView({
           )}
         </div>
         <div className="detail-actions">
+          <Link className="secondary-button" to={`/knowledge/${record.id}/connections`}>
+            Relation · Evidence
+          </Link>
           <Link className="secondary-button" to={`/knowledge/${record.id}/edit`}>
             수정
           </Link>

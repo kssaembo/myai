@@ -240,6 +240,9 @@ export function DocumentDetailView({ record }: { record: KnowledgeRecord }) {
           <p>{record.summary ?? '요약이 아직 없습니다.'}</p>
         </div>
         <div className="detail-actions">
+          <Link className="secondary-button" to={`/knowledge/${record.id}/connections`}>
+            Relation · Evidence
+          </Link>
           {documentData.document_kind === 'ref' && (
             <Link className="secondary-button" to={`/knowledge/${record.id}/ref-review`}>
               REF 구조화

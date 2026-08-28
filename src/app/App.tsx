@@ -5,7 +5,9 @@ import { AuthProvider } from '@/features/auth/AuthProvider'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
+import { GraphPage } from '@/pages/graph/GraphPage'
 import { ImportsPage } from '@/pages/imports/ImportsPage'
+import { ConnectionsPage } from '@/pages/connections/ConnectionsPage'
 import {
   KnowledgeDetailPage,
   KnowledgeFormPage,
@@ -14,7 +16,6 @@ import {
 import { RefReviewPage } from '@/pages/ref-review/RefReviewPage'
 import { SearchPage } from '@/pages/search/SearchPage'
 import { TaxonomyPage } from '@/pages/settings/TaxonomyPage'
-import { SectionPlaceholderPage } from '@/shared/ui/SectionPlaceholderPage'
 import '@/styles/global.css'
 
 export function App() {
@@ -29,20 +30,12 @@ export function App() {
               <Route path="knowledge" element={<KnowledgeListPage />} />
               <Route path="knowledge/new" element={<KnowledgeFormPage />} />
               <Route path="knowledge/:itemId/ref-review" element={<RefReviewPage />} />
+              <Route path="knowledge/:itemId/connections" element={<ConnectionsPage />} />
               <Route path="knowledge/:itemId" element={<KnowledgeDetailPage />} />
               <Route path="knowledge/:itemId/edit" element={<KnowledgeFormPage />} />
               <Route path="projects" element={<KnowledgeListPage projectOnly />} />
               <Route path="projects/:itemId" element={<KnowledgeDetailPage />} />
-              <Route
-                path="graph"
-                element={
-                  <SectionPlaceholderPage
-                    eyebrow="Graph"
-                    title="Knowledge Graph"
-                    description="Node와 Relation을 탐색하는 Graph는 V1 후반 단계에서 구현됩니다."
-                  />
-                }
-              />
+              <Route path="graph" element={<GraphPage />} />
               <Route path="imports" element={<ImportsPage />} />
               <Route path="search" element={<SearchPage />} />
               <Route path="settings/taxonomy" element={<TaxonomyPage />} />

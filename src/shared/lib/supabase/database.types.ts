@@ -644,6 +644,28 @@ export type Database = {
         Args: { p_project_id: string }
         Returns: Json
       }
+      get_knowledge_connections: { Args: { p_item_id: string }; Returns: Json }
+      save_relation: {
+        Args: {
+          p_item_evidence_ids?: string[]
+          p_rationale: string
+          p_relation_id: string | null
+          p_relation_type_id: string
+          p_source_item_id: string
+          p_status: RelationStatus
+          p_target_item_id: string
+        }
+        Returns: string
+      }
+      archive_relation: { Args: { p_relation_id: string }; Returns: undefined }
+      merge_knowledge_items: {
+        Args: { p_duplicate_id: string; p_primary_id: string }
+        Returns: Json
+      }
+      get_knowledge_graph: {
+        Args: { p_limit?: number; p_offset?: number; p_project_id?: string | null }
+        Returns: Json
+      }
       normalize_lookup_text: {
         Args: { input_value: string }
         Returns: string

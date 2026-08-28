@@ -1383,6 +1383,263 @@ a {
   font-size: 0.78rem;
   font-weight: 750;
 }
+
+.connections-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 1rem;
+  margin-top: 1rem;
+  align-items: start;
+}
+.connections-main {
+  display: grid;
+  gap: 1rem;
+}
+.relation-form,
+.relation-manager,
+.duplicate-panel {
+  padding: 1.1rem;
+}
+.relation-form {
+  display: grid;
+  gap: 1rem;
+}
+.relation-form > label {
+  display: grid;
+  gap: 0.4rem;
+  color: #4f5d70;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.relation-form select,
+.relation-form textarea {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid #d8e0e7;
+  border-radius: 9px;
+  background: #fff;
+}
+.connection-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.connection-section-heading h2,
+.duplicate-panel h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+.relation-evidence-picker {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.relation-evidence-picker legend {
+  padding: 0 0.4rem;
+  color: #516176;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+.relation-evidence-picker label {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 0.45rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+.relation-evidence-picker p,
+.duplicate-panel > p {
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1.55;
+}
+.relation-manager {
+  display: grid;
+  gap: 0.7rem;
+}
+.relation-manager > article {
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.relation-manager > article > div:first-child,
+.relation-manager footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.relation-manager article > a {
+  display: inline-block;
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+.relation-manager article > p,
+.relation-evidence-count {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+.relation-manager blockquote {
+  margin: 0.45rem 0;
+  padding: 0.55rem;
+  background: var(--surface-soft);
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+.relation-manager blockquote a {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--teal-dark);
+  font-weight: 700;
+}
+.duplicate-panel {
+  position: sticky;
+  top: 84px;
+  display: grid;
+  gap: 0.7rem;
+}
+.duplicate-panel > label {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 0.45rem;
+  padding: 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+.duplicate-panel > label.selected {
+  border-color: #8bd2ca;
+  background: var(--teal-soft);
+}
+.duplicate-panel label span {
+  display: grid;
+  gap: 0.25rem;
+}
+.duplicate-panel label strong {
+  font-size: 0.72rem;
+}
+.duplicate-panel label small,
+.duplicate-panel > small {
+  color: var(--muted);
+  font-size: 0.62rem;
+  line-height: 1.45;
+}
+.danger-button {
+  min-height: 40px;
+  color: #9d3443;
+  border: 1px solid #e9c5ca;
+  border-radius: 9px;
+  background: #fff4f5;
+  font-weight: 750;
+}
+
+.graph-count {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.graph-toolbar {
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1.3fr) minmax(160px, 1fr) repeat(3, minmax(120px, 0.7fr))
+    auto;
+  gap: 0.65rem;
+  margin: 1rem 0;
+  padding: 0.8rem;
+  align-items: end;
+}
+.graph-toolbar label {
+  display: grid;
+  gap: 0.35rem;
+  color: #647286;
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+.graph-toolbar select,
+.graph-toolbar input {
+  width: 100%;
+  height: 39px;
+  min-width: 0;
+  padding: 0 0.65rem;
+  border: 1px solid #d7e0e7;
+  border-radius: 8px;
+  outline: none;
+  background: #fff;
+  font-size: 0.7rem;
+}
+.graph-workspace {
+  display: grid;
+  min-height: 640px;
+  grid-template-columns: minmax(0, 1fr) 270px;
+  overflow: hidden;
+  padding: 0;
+}
+.sigma-container {
+  position: relative;
+  min-width: 0;
+  min-height: 640px;
+  background:
+    radial-gradient(circle at 50% 45%, rgb(25 183 167 / 7%), transparent 32%),
+    linear-gradient(#f8fafb 1px, transparent 1px),
+    linear-gradient(90deg, #f8fafb 1px, transparent 1px), #fff;
+  background-size:
+    auto,
+    32px 32px,
+    32px 32px,
+    auto;
+}
+.graph-inspector {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 1.2rem;
+  border-left: 1px solid var(--line);
+  background: #fbfcfd;
+}
+.graph-inspector h2 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+.graph-inspector > p:not(.eyebrow) {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+.graph-inspector dl {
+  width: 100%;
+  margin: 0;
+}
+.graph-inspector dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.68rem;
+}
+.graph-inspector dt {
+  color: var(--muted);
+}
+.graph-inspector dd {
+  margin: 0;
+  text-align: right;
+}
+.graph-inspector .primary-button,
+.graph-inspector .secondary-button {
+  width: 100%;
+  margin-top: auto;
+  text-align: center;
+}
+.graph-load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
 .metadata-row {
   flex-wrap: wrap;
 }
@@ -2847,6 +3104,18 @@ a {
   .project-stat-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+  .connections-layout {
+    grid-template-columns: 1fr;
+  }
+  .duplicate-panel {
+    position: static;
+  }
+  .graph-toolbar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .graph-workspace {
+    grid-template-columns: minmax(0, 1fr) 230px;
+  }
   .document-compare > section + section {
     border-top: 1px solid var(--line);
     border-left: 0;
@@ -2932,6 +3201,18 @@ a {
   }
   .project-document-list {
     grid-template-columns: 1fr;
+  }
+  .graph-toolbar,
+  .graph-workspace {
+    grid-template-columns: 1fr;
+  }
+  .graph-inspector {
+    min-height: 240px;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+  .sigma-container {
+    min-height: 500px;
   }
   .filter-bar select {
     width: 100%;

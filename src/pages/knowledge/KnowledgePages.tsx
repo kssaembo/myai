@@ -775,6 +775,9 @@ export function KnowledgeDetailPage() {
           <p>{record.summary ?? '요약이 아직 없습니다.'}</p>
         </div>
         <div className="detail-actions">
+          <Link className="secondary-button" to={`/knowledge/${record.id}/connections`}>
+            Relation · Evidence
+          </Link>
           <Link className="secondary-button" to={`/knowledge/${record.id}/edit`}>
             수정
           </Link>
@@ -885,11 +888,14 @@ export function KnowledgeDetailPage() {
             <h2>관계와 관련 Project</h2>
           </header>
           <div className="quiet-empty">
-            <strong>연결 준비 완료</strong>
+            <strong>Relation과 Evidence 관리</strong>
             <p>
-              이 Node는 Graph의 연결 대상이 될 수 있습니다. Relation 생성은 후속 단계에서
-              활성화됩니다.
+              허용된 유형의 Relation을 만들고 원문 Evidence를 연결하거나 중복 Node를 병합할 수
+              있습니다.
             </p>
+            <Link className="secondary-button" to={`/knowledge/${record.id}/connections`}>
+              연결 관리 열기
+            </Link>
           </div>
         </article>
       </div>

@@ -68,6 +68,21 @@ export function friendlyDataError(error: unknown) {
     return 'Step 9 SQL Migration을 먼저 Supabase에 적용해 주세요.'
   if (message.includes('get_project_aggregate'))
     return 'Step 10 SQL Migration을 먼저 Supabase에 적용해 주세요.'
+  if (
+    message.includes('get_knowledge_connections') ||
+    message.includes('save_relation') ||
+    message.includes('archive_relation') ||
+    message.includes('merge_knowledge_items')
+  )
+    return 'Step 11 SQL Migration을 먼저 Supabase에 적용해 주세요.'
+  if (message.includes('get_knowledge_graph'))
+    return 'Step 12 SQL Migration을 먼저 Supabase에 적용해 주세요.'
+  if (message.includes('DUPLICATE_ACTIVE_RELATION')) return '같은 활성 Relation이 이미 있습니다.'
+  if (
+    message.includes('RELATION_SOURCE_TYPE_NOT_ALLOWED') ||
+    message.includes('RELATION_TARGET_TYPE_NOT_ALLOWED')
+  )
+    return '선택한 Relation 유형에서 허용하지 않는 Node 조합입니다.'
   if (message.includes('PARSER_TIMEOUT'))
     return '문서 처리 시간이 2분을 초과했습니다. 더 작은 파일로 다시 시도해 주세요.'
   if (message.includes('PARSER_WORKER_FAILED'))
