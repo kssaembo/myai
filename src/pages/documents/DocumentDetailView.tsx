@@ -10,6 +10,7 @@ import {
   readDocumentSections,
   readOriginalForParsing,
   readOriginalPreview,
+  setDocumentAIAllowed,
   setVersionProcessing,
   type Document,
   type DocumentVersion,
@@ -200,6 +201,27 @@ export function DocumentDetailView({ record }: { record: KnowledgeRecord }) {
       await load()
     } finally {
       setProgress({ value: 0, label: '' })
+      setIsWorking(false)
+    }
+  }
+
+  const toggleAIAllowed = async () => {
+    if (!documentData) return
+    setIsWorking(true)
+    setError('')
+    setMessage('')
+    try {
+      const nextAllowed = !documentData.ai_allowed
+      await setDocumentAIAllowed(record.id, nextAllowed)
+      setDocumentData({ ...documentData, ai_allowed: nextAllowed })
+      setMessage(
+        nextAllowed
+          ? '이 문서를 AI 의미 검색에 사용할 수 있도록 허용했습니다.'
+          : 'AI 사용을 중지했습니다. 기존 색인은 검색에서 즉시 제외됩니다.',
+      )
+    } catch (caught) {
+      setError(friendlyDataError(caught))
+    } finally {
       setIsWorking(false)
     }
   }
@@ -443,7 +465,16 @@ export function DocumentDetailView({ record }: { record: KnowledgeRecord }) {
             </div>
             <div>
               <dt>AI 허용</dt>
-              <dd>{documentData.ai_allowed ? '허용' : '허용 안 함'}</dd>
+              <dd>
+                <button
+                  className="text-button"
+                  disabled={isWorking}
+                  type="button"
+                  onClick={() => void toggleAIAllowed()}
+                >
+                  {documentData.ai_allowed ? '허용됨 · 끄기' : '허용 안 함 · 켜기'}
+                </button>
+              </dd>
             </div>
             <div>
               <dt>Version 수</dt>

@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { getAIStatus, testAIConnection, type AIStatus } from '@/entities/ai/api'
+import {
+  embedPendingSections,
+  getAIStatus,
+  getEmbeddingStatus,
+  testAIConnection,
+  type AIStatus,
+  type EmbeddingStatus,
+} from '@/entities/ai/api'
 import { friendlyDataError } from '@/shared/lib/display'
 import { ErrorState, LoadingState } from '@/shared/ui/States'
 
@@ -9,6 +16,8 @@ export function AISettingsPage() {
   const [status, setStatus] = useState<AIStatus | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isTesting, setIsTesting] = useState(false)
+  const [isEmbedding, setIsEmbedding] = useState(false)
+  const [embeddingStatus, setEmbeddingStatus] = useState<EmbeddingStatus | null>(null)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
@@ -16,7 +25,12 @@ export function AISettingsPage() {
     setIsLoading(true)
     setError('')
     try {
-      setStatus(await getAIStatus())
+      const [nextStatus, nextEmbeddingStatus] = await Promise.all([
+        getAIStatus(),
+        getEmbeddingStatus(),
+      ])
+      setStatus(nextStatus)
+      setEmbeddingStatus(nextEmbeddingStatus)
     } catch (caught) {
       setError(friendlyDataError(caught))
     } finally {
@@ -41,6 +55,26 @@ export function AISettingsPage() {
       setError(friendlyDataError(caught))
     } finally {
       setIsTesting(false)
+    }
+  }
+
+  const createEmbeddings = async () => {
+    setIsEmbedding(true)
+    setError('')
+    setMessage('')
+    try {
+      const result = await embedPendingSections()
+      setEmbeddingStatus(result.status)
+      setMessage(
+        result.processed
+          ? `${result.processed}개 Section의 의미 색인을 생성했습니다.`
+          : '생성할 Section이 없습니다.',
+      )
+      await load()
+    } catch (caught) {
+      setError(friendlyDataError(caught))
+    } finally {
+      setIsEmbedding(false)
     }
   }
 
@@ -122,6 +156,39 @@ export function AISettingsPage() {
           <p className="privacy-note">
             이 한도는 예상치 못한 과다 호출을 막는 앱 내부 제한입니다. Google의 실제 무료 Quota가
             우선하며, 무료 티어 콘텐츠는 제품 개선에 사용될 수 있습니다.
+          </p>
+        </article>
+        <article className="content-card ai-embedding-card">
+          <p className="eyebrow">Knowledge RAG</p>
+          <h2>의미 검색 색인</h2>
+          <dl className="metadata-list">
+            <div>
+              <dt>AI 허용 Section</dt>
+              <dd>{embeddingStatus?.eligible_count ?? 0}</dd>
+            </div>
+            <div>
+              <dt>색인 완료</dt>
+              <dd>{embeddingStatus?.embedded_count ?? 0}</dd>
+            </div>
+            <div>
+              <dt>남은 Section</dt>
+              <dd>{embeddingStatus?.pending_count ?? 0}</dd>
+            </div>
+          </dl>
+          <button
+            className="primary-button"
+            disabled={
+              isEmbedding ||
+              !status.settings.is_enabled ||
+              (embeddingStatus?.pending_count ?? 0) === 0
+            }
+            type="button"
+            onClick={() => void createEmbeddings()}
+          >
+            {isEmbedding ? '의미 색인 생성 중…' : '다음 12개 Section 색인'}
+          </button>
+          <p className="privacy-note">
+            문서 상세에서 AI 사용을 허용한 문서만 Gemini로 전송하고 의미 검색에 사용합니다.
           </p>
         </article>
       </div>

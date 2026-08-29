@@ -70,7 +70,7 @@ describe('authentication shell', () => {
     render(<App />)
 
     expect(
-      await screen.findByRole('heading', { name: '좋은 지식은 기록에서 시작됩니다.' }),
+      await screen.findByRole('heading', { name: '무엇을 함께 생각해 볼까요?' }),
     ).toBeInTheDocument()
     expect(screen.getByText('owner@example.com')).toBeInTheDocument()
   })
@@ -92,7 +92,7 @@ describe('authentication shell', () => {
     fireEvent.click(screen.getByRole('button', { name: '로그인' }))
 
     expect(
-      await screen.findByRole('heading', { name: '좋은 지식은 기록에서 시작됩니다.' }),
+      await screen.findByRole('heading', { name: '무엇을 함께 생각해 볼까요?' }),
     ).toBeInTheDocument()
     expect(authHarness.signInWithPassword).toHaveBeenCalledWith({
       email: 'owner@example.com',

@@ -7,12 +7,8 @@ type IconName =
   'dashboard' | 'search' | 'knowledge' | 'projects' | 'graph' | 'imports' | 'settings' | 'trash'
 
 const navigation: { label: string; to: string; icon: IconName; end?: boolean }[] = [
-  { label: 'Dashboard', to: '/', icon: 'dashboard', end: true },
-  { label: 'Search', to: '/search', icon: 'search' },
+  { label: 'Home', to: '/', icon: 'dashboard', end: true },
   { label: 'Knowledge', to: '/knowledge', icon: 'knowledge' },
-  { label: 'Projects', to: '/projects', icon: 'projects' },
-  { label: 'Graph', to: '/graph', icon: 'graph' },
-  { label: 'Imports', to: '/imports', icon: 'imports' },
 ]
 
 const pageTitles: Record<string, string> = {

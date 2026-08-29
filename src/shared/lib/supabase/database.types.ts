@@ -347,6 +347,37 @@ type AIRunRow = {
   completed_at: string | null
 }
 
+type AIConversationRow = {
+  id: string
+  owner_id: string
+  title: string
+  created_at: string
+  updated_at: string
+}
+
+type AIMessageRow = {
+  id: string
+  owner_id: string
+  conversation_id: string
+  role: 'user' | 'assistant'
+  content: string
+  model: string | null
+  input_tokens: number
+  output_tokens: number
+  created_at: string
+}
+
+type AIMessageSourceRow = {
+  id: string
+  owner_id: string
+  message_id: string
+  item_id: string
+  section_id: string | null
+  rank: number
+  snippet: string
+  created_at: string
+}
+
 export type SearchKnowledgeRow = {
   item_id: string
   section_id: string | null
@@ -579,6 +610,29 @@ export type Database = {
         InsertRow<AIRunRow, 'owner_id' | 'provider' | 'model' | 'purpose', 'id' | 'created_at'>,
         UpdateRow<AIRunRow, 'id' | 'owner_id' | 'created_at'>
       >
+      ai_conversations: TableDefinition<
+        AIConversationRow,
+        InsertRow<AIConversationRow, 'owner_id' | 'title', 'id' | 'created_at' | 'updated_at'>,
+        UpdateRow<AIConversationRow, 'id' | 'owner_id' | 'created_at' | 'updated_at'>
+      >
+      ai_messages: TableDefinition<
+        AIMessageRow,
+        InsertRow<
+          AIMessageRow,
+          'owner_id' | 'conversation_id' | 'role' | 'content',
+          'id' | 'created_at'
+        >,
+        UpdateRow<AIMessageRow, 'id' | 'owner_id' | 'conversation_id' | 'created_at'>
+      >
+      ai_message_sources: TableDefinition<
+        AIMessageSourceRow,
+        InsertRow<
+          AIMessageSourceRow,
+          'owner_id' | 'message_id' | 'item_id' | 'rank' | 'snippet',
+          'id' | 'created_at'
+        >,
+        UpdateRow<AIMessageSourceRow, 'id' | 'owner_id' | 'message_id' | 'created_at'>
+      >
     }
     Views: EmptySchema
     Functions: {
@@ -722,6 +776,37 @@ export type Database = {
       restore_knowledge_item: { Args: { p_item_id: string }; Returns: undefined }
       permanently_delete_knowledge_item: { Args: { p_item_id: string }; Returns: Json }
       get_ai_status: { Args: Record<never, never>; Returns: Json }
+      get_embedding_status: { Args: Record<never, never>; Returns: Json }
+      get_pending_embedding_sections: {
+        Args: { p_limit?: number }
+        Returns: {
+          section_id: string
+          title: string
+          heading: string | null
+          content: string
+          token_estimate: number
+        }[]
+      }
+      save_section_embeddings: {
+        Args: { p_model: string; p_embeddings: Json }
+        Returns: number
+      }
+      match_document_sections: {
+        Args: {
+          p_query_embedding: string
+          p_match_count?: number
+          p_min_similarity?: number
+        }
+        Returns: {
+          item_id: string
+          section_id: string
+          title: string
+          node_type_label: string
+          heading_path: string[]
+          snippet: string
+          score: number
+        }[]
+      }
       reserve_ai_request: {
         Args: {
           p_provider: string
@@ -741,6 +826,18 @@ export type Database = {
           p_error_code?: string | null
         }
         Returns: undefined
+      }
+      save_ai_exchange: {
+        Args: {
+          p_conversation_id: string | null
+          p_question: string
+          p_answer: string
+          p_model: string
+          p_input_tokens: number
+          p_output_tokens: number
+          p_sources?: Json
+        }
+        Returns: Json
       }
       normalize_lookup_text: {
         Args: { input_value: string }

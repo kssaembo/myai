@@ -113,6 +113,14 @@ export async function readDocumentMetadata(itemId: string) {
   return { document: documentResult.data, versions: versionsResult.data ?? [] }
 }
 
+export async function setDocumentAIAllowed(itemId: string, allowed: boolean) {
+  const { error } = await supabase
+    .from('documents')
+    .update({ ai_allowed: allowed })
+    .eq('item_id', itemId)
+  throwIfError(error)
+}
+
 export async function addUploadedDocumentVersion(
   ownerId: string,
   documentId: string,
