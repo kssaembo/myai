@@ -4,6 +4,8 @@ import { createAIProvider } from '../_shared/ai/provider.ts'
 import type { AIProviderName } from '../_shared/ai/types.ts'
 
 const MAX_REQUEST_BYTES = 16 * 1024
+const EMBEDDING_DIMENSIONS = 768
+const EMBEDDING_BATCH_SIZE = 12
 const connectivityPrompt = '한국어로 정확히 "Gemini 연결 정상"이라고만 답하세요.'
 const questionStopWords = new Set([
   '그리고',
@@ -39,6 +41,22 @@ interface KnowledgeSource {
 interface ConversationMessage {
   role: 'user' | 'assistant'
   content: string
+}
+
+interface EmbeddingStatus {
+  model: string
+  dimensions: number
+  eligible_count: number
+  embedded_count: number
+  pending_count: number
+}
+
+interface PendingEmbeddingSection {
+  section_id: string
+  title: string
+  heading: string | null
+  content: string
+  token_estimate: number
 }
 
 function allowedOrigin(request: Request) {
@@ -104,6 +122,7 @@ function questionKeywords(question: string) {
 async function retrieveKnowledge(
   client: ReturnType<typeof createClient>,
   question: string,
+  semanticSources: KnowledgeSource[],
 ): Promise<KnowledgeSource[]> {
   const queries = [question.trim(), ...questionKeywords(question)].filter(Boolean)
   const responses = await Promise.all(
@@ -115,16 +134,16 @@ async function retrieveKnowledge(
       }),
     ),
   )
-  const ranked = new Map<string, KnowledgeSource>()
+  const keywordSources = new Map<string, KnowledgeSource>()
   for (const response of responses) {
     if (response.error) continue
     for (const row of (response.data ?? []) as KnowledgeSource[]) {
       const key = `${row.item_id}:${row.section_id ?? ''}`
-      const previous = ranked.get(key)
-      if (!previous || Number(row.score) > Number(previous.score)) ranked.set(key, row)
+      const previous = keywordSources.get(key)
+      if (!previous || Number(row.score) > Number(previous.score)) keywordSources.set(key, row)
     }
   }
-  if (!ranked.size) {
+  if (!keywordSources.size && !semanticSources.length) {
     const fallback = await client.rpc('search_knowledge', {
       p_query: '',
       p_page: 1,
@@ -132,11 +151,28 @@ async function retrieveKnowledge(
     })
     if (!fallback.error) {
       for (const row of (fallback.data ?? []) as KnowledgeSource[])
-        ranked.set(`${row.item_id}:${row.section_id ?? ''}`, row)
+        keywordSources.set(`${row.item_id}:${row.section_id ?? ''}`, row)
     }
   }
-  return [...ranked.values()]
-    .sort((left, right) => Number(right.score) - Number(left.score))
+  const fused = new Map<string, { source: KnowledgeSource; score: number }>()
+  const addRanked = (sources: KnowledgeSource[], weight: number) => {
+    sources.forEach((source, index) => {
+      const key = `${source.item_id}:${source.section_id ?? ''}`
+      const previous = fused.get(key)
+      fused.set(key, {
+        source: previous?.source ?? source,
+        score: (previous?.score ?? 0) + weight / (40 + index + 1),
+      })
+    })
+  }
+  addRanked(
+    [...keywordSources.values()].sort((left, right) => Number(right.score) - Number(left.score)),
+    1,
+  )
+  addRanked(semanticSources, 1.25)
+  return [...fused.values()]
+    .sort((left, right) => right.score - left.score)
+    .map(({ source, score }) => ({ ...source, score }))
     .slice(0, 6)
 }
 
@@ -189,7 +225,11 @@ Deno.serve(async (request) => {
   } catch {
     return json(origin, 400, { error: 'INVALID_JSON' })
   }
-  if (body.action !== 'connectivity_test' && body.action !== 'chat')
+  if (
+    body.action !== 'connectivity_test' &&
+    body.action !== 'chat' &&
+    body.action !== 'embed_pending'
+  )
     return json(origin, 400, { error: 'ACTION_NOT_ALLOWED' })
 
   const { data: statusData, error: statusError } = await client.rpc('get_ai_status')
@@ -198,10 +238,91 @@ Deno.serve(async (request) => {
   const settings = statusData.settings as Record<string, unknown>
   const providerName = settings.provider as AIProviderName
   const model = String(settings.chat_model ?? '')
+  const embeddingModel = String(settings.embedding_model ?? '')
+  const provider = createAIProvider(providerName)
+
+  if (body.action === 'embed_pending') {
+    const pendingResult = await client.rpc('get_pending_embedding_sections', {
+      p_limit: EMBEDDING_BATCH_SIZE,
+    })
+    if (pendingResult.error) return json(origin, 500, { error: 'EMBEDDING_QUEUE_UNAVAILABLE' })
+    const pending = (pendingResult.data ?? []) as PendingEmbeddingSection[]
+    if (!pending.length) {
+      const current = await client.rpc('get_embedding_status')
+      return json(origin, 200, { ok: true, processed: 0, status: current.data })
+    }
+    const texts = pending.map((section) =>
+      [`문서: ${section.title}`, section.heading ? `구역: ${section.heading}` : '', section.content]
+        .filter(Boolean)
+        .join('\n'),
+    )
+    const estimatedTokens = pending.reduce(
+      (sum, section) => sum + Math.max(section.token_estimate ?? 0, 1),
+      0,
+    )
+    const reservationResult = await client.rpc('reserve_ai_request', {
+      p_provider: providerName,
+      p_model: embeddingModel,
+      p_purpose: 'embed',
+      p_estimated_input_tokens: estimatedTokens,
+    })
+    if (reservationResult.error || !reservationResult.data)
+      return json(origin, 429, {
+        error: reservationResult.error?.message ?? 'AI_LIMIT_REACHED',
+      })
+    const reservation = reservationResult.data as Record<string, unknown>
+    const runId = String(reservation.run_id)
+    const startedAt = performance.now()
+    try {
+      const result = await provider.embedTexts({
+        model: embeddingModel,
+        texts,
+        taskType: 'RETRIEVAL_DOCUMENT',
+        dimensions: EMBEDDING_DIMENSIONS,
+      })
+      const saved = await client.rpc('save_section_embeddings', {
+        p_model: embeddingModel,
+        p_embeddings: pending.map((section, index) => ({
+          section_id: section.section_id,
+          embedding: result.embeddings[index],
+        })),
+      })
+      if (saved.error) throw new Error('EMBEDDING_SAVE_FAILED')
+      await client.rpc('complete_ai_request', {
+        p_run_id: runId,
+        p_status: 'completed',
+        p_input_tokens: result.inputTokens,
+        p_output_tokens: 0,
+        p_duration_ms: Math.round(performance.now() - startedAt),
+        p_error_code: null,
+      })
+      const current = await client.rpc('get_embedding_status')
+      return json(origin, 200, {
+        ok: true,
+        processed: Number(saved.data ?? 0),
+        status: current.data,
+        usage: reservation,
+      })
+    } catch (caught) {
+      const code = caught instanceof Error ? caught.message.split(':')[0] : 'EMBEDDING_FAILED'
+      console.error('AI gateway embedding failure', code)
+      await client.rpc('complete_ai_request', {
+        p_run_id: runId,
+        p_status: 'failed',
+        p_input_tokens: 0,
+        p_output_tokens: 0,
+        p_duration_ms: Math.round(performance.now() - startedAt),
+        p_error_code: code,
+      })
+      return json(origin, 502, { error: code })
+    }
+  }
+
   let prompt = connectivityPrompt
   let systemInstruction = '당신은 Personal AI Knowledge OS의 안전한 연결 점검 도우미입니다.'
   let maxOutputTokens = 30
   let sources: KnowledgeSource[] = []
+  let semanticInputTokens = 0
   let conversationId: string | null = null
   if (body.action === 'chat') {
     if (typeof body.question !== 'string' || body.question.trim().length < 1)
@@ -229,7 +350,33 @@ Deno.serve(async (request) => {
         .limit(8)
       if (!historyResult.error) history = (historyResult.data as ConversationMessage[]).reverse()
     }
-    sources = await retrieveKnowledge(client, body.question)
+    let semanticSources: KnowledgeSource[] = []
+    const embeddingStatusResult = await client.rpc('get_embedding_status')
+    const embeddingStatus = embeddingStatusResult.data as EmbeddingStatus | null
+    if (!embeddingStatusResult.error && Number(embeddingStatus?.embedded_count ?? 0) > 0) {
+      try {
+        const queryEmbedding = await provider.embedTexts({
+          model: embeddingModel,
+          texts: [body.question.trim()],
+          taskType: 'RETRIEVAL_QUERY',
+          dimensions: EMBEDDING_DIMENSIONS,
+        })
+        semanticInputTokens = queryEmbedding.inputTokens
+        const semanticResult = await client.rpc('match_document_sections', {
+          p_query_embedding: `[${queryEmbedding.embeddings[0].join(',')}]`,
+          p_match_count: 8,
+          p_min_similarity: 0.25,
+        })
+        if (!semanticResult.error)
+          semanticSources = (semanticResult.data ?? []) as KnowledgeSource[]
+      } catch (caught) {
+        console.error(
+          'Semantic retrieval fallback',
+          caught instanceof Error ? caught.message.split(':')[0] : 'UNKNOWN',
+        )
+      }
+    }
+    sources = await retrieveKnowledge(client, body.question, semanticSources)
     systemInstruction = [
       '당신은 사용자의 개인 지식에 최적화된 한국어 AI 비서입니다.',
       '제공된 개인 지식을 최우선 근거로 사용하세요.',
@@ -240,7 +387,8 @@ Deno.serve(async (request) => {
     prompt = `이전 대화:\n${historyPrompt(history)}\n\n개인 지식:\n${contextPrompt(sources)}\n\n현재 질문:\n${body.question.trim()}`
     maxOutputTokens = 900
   }
-  const estimatedTokens = Math.ceil((prompt.length + systemInstruction.length) / 4)
+  const estimatedTokens =
+    Math.ceil((prompt.length + systemInstruction.length) / 4) + semanticInputTokens
   const { data: reservation, error: reserveError } = await client.rpc('reserve_ai_request', {
     p_provider: providerName,
     p_model: model,
@@ -252,7 +400,6 @@ Deno.serve(async (request) => {
   const runId = String(reservation.run_id)
   const startedAt = performance.now()
   try {
-    const provider = createAIProvider(providerName)
     const result = await provider.generateText({
       model,
       systemInstruction,
@@ -262,7 +409,7 @@ Deno.serve(async (request) => {
     await client.rpc('complete_ai_request', {
       p_run_id: runId,
       p_status: 'completed',
-      p_input_tokens: result.inputTokens,
+      p_input_tokens: result.inputTokens + semanticInputTokens,
       p_output_tokens: result.outputTokens,
       p_duration_ms: Math.round(performance.now() - startedAt),
       p_error_code: null,
@@ -273,7 +420,7 @@ Deno.serve(async (request) => {
         p_question: String(body.question).trim(),
         p_answer: result.text.trim(),
         p_model: model,
-        p_input_tokens: result.inputTokens,
+        p_input_tokens: result.inputTokens + semanticInputTokens,
         p_output_tokens: result.outputTokens,
         p_sources: sources.map((source, index) => ({
           item_id: source.item_id,

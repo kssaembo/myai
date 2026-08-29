@@ -13,7 +13,20 @@ export interface AIGenerateResult {
   outputTokens: number
 }
 
+export interface AIEmbedRequest {
+  model: string
+  texts: string[]
+  taskType: 'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY'
+  dimensions: number
+}
+
+export interface AIEmbedResult {
+  embeddings: number[][]
+  inputTokens: number
+}
+
 export interface AIProvider {
   readonly name: AIProviderName
   generateText(request: AIGenerateRequest): Promise<AIGenerateResult>
+  embedTexts(request: AIEmbedRequest): Promise<AIEmbedResult>
 }

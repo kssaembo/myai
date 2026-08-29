@@ -1,9 +1,27 @@
-import type { AIGenerateRequest, AIGenerateResult, AIProvider } from './types.ts'
+import type {
+  AIEmbedRequest,
+  AIEmbedResult,
+  AIGenerateRequest,
+  AIGenerateResult,
+  AIProvider,
+} from './types.ts'
 
 interface GeminiResponse {
   candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
   usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number }
   error?: { message?: string }
+}
+
+interface GeminiEmbeddingResponse {
+  embeddings?: Array<{ values?: number[] }>
+  usageMetadata?: { promptTokenCount?: number }
+  error?: { message?: string }
+}
+
+function normalizeEmbedding(values: number[]) {
+  const magnitude = Math.sqrt(values.reduce((sum, value) => sum + value * value, 0))
+  if (!Number.isFinite(magnitude) || magnitude === 0) throw new Error('GEMINI_EMBEDDING_INVALID')
+  return values.map((value) => value / magnitude)
 }
 
 export class GeminiProvider implements AIProvider {
@@ -36,6 +54,45 @@ export class GeminiProvider implements AIProvider {
       text,
       inputTokens: payload.usageMetadata?.promptTokenCount ?? 0,
       outputTokens: payload.usageMetadata?.candidatesTokenCount ?? 0,
+    }
+  }
+
+  async embedTexts(request: AIEmbedRequest): Promise<AIEmbedResult> {
+    if (!request.texts.length || request.texts.length > 20)
+      throw new Error('GEMINI_EMBEDDING_BATCH_INVALID')
+    const modelName = `models/${request.model}`
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/${modelName}:batchEmbedContents`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': this.apiKey },
+        body: JSON.stringify({
+          requests: request.texts.map((text) => ({
+            model: modelName,
+            content: { parts: [{ text }] },
+            embedContentConfig: {
+              taskType: request.taskType,
+              outputDimensionality: request.dimensions,
+              autoTruncate: true,
+            },
+          })),
+        }),
+      },
+    )
+    const payload = (await response.json()) as GeminiEmbeddingResponse
+    if (!response.ok)
+      throw new Error(`GEMINI_EMBED_HTTP_${response.status}:${payload.error?.message ?? ''}`)
+    const embeddings = payload.embeddings?.map((embedding) => embedding.values ?? []) ?? []
+    if (
+      embeddings.length !== request.texts.length ||
+      embeddings.some((embedding) => embedding.length !== request.dimensions)
+    )
+      throw new Error('GEMINI_EMBEDDING_INVALID')
+    return {
+      embeddings: embeddings.map(normalizeEmbedding),
+      inputTokens:
+        payload.usageMetadata?.promptTokenCount ??
+        Math.ceil(request.texts.reduce((sum, text) => sum + text.length, 0) / 4),
     }
   }
 }
