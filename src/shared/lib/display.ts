@@ -95,6 +95,12 @@ export function friendlyDataError(error: unknown) {
   if (message.includes('AI_DAILY_TOKEN_LIMIT')) return '오늘의 AI 입력 Token 한도에 도달했습니다.'
   if (message.includes('GEMINI_API_KEY_NOT_CONFIGURED'))
     return 'Supabase Edge Function Secret에 GEMINI_API_KEY를 등록해 주세요.'
+  if (
+    message.includes('AI_GATEWAY_TIMEOUT') ||
+    message.includes('GEMINI_TIMEOUT') ||
+    message.includes('GEMINI_EMBED_TIMEOUT')
+  )
+    return 'AI 응답 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.'
   if (message.includes('FunctionsHttpError') || message.includes('AI_CONNECTIVITY_TEST_FAILED'))
     return 'AI 서버 연결에 실패했습니다. Edge Function 배포와 Secret 설정을 확인해 주세요.'
   if (message.includes('DUPLICATE_ACTIVE_RELATION')) return '같은 활성 Relation이 이미 있습니다.'

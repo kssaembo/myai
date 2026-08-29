@@ -191,7 +191,7 @@ export function DashboardPage() {
             {isSending && (
               <div className="chat-message assistant pending">
                 <span className="chat-role">AI</span>
-                <p>내 지식에서 근거를 찾는 중…</p>
+                <p>개인 지식과 Gemini 답변을 준비하는 중…</p>
               </div>
             )}
             <div ref={messageEndRef} />

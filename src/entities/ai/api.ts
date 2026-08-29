@@ -1,5 +1,7 @@
 import { supabase } from '@/shared/lib/supabase'
 
+const AI_GATEWAY_TIMEOUT_MS = 35_000
+
 export interface AIStatus {
   settings: {
     provider: string
@@ -85,6 +87,33 @@ function throwIfError(error: { message: string } | null) {
   if (error) throw new Error(error.message)
 }
 
+async function throwIfFunctionError(error: { message: string; context?: unknown } | null) {
+  if (!error) return
+  if (error.context instanceof Response) {
+    try {
+      const payload = (await error.context.clone().json()) as { error?: unknown }
+      if (typeof payload.error === 'string') throw new Error(payload.error)
+    } catch (caught) {
+      if (caught instanceof Error && caught.message !== 'Unexpected end of JSON input') throw caught
+    }
+  }
+  throw new Error(error.message)
+}
+
+async function invokeAIGateway<T>(body: Record<string, unknown>) {
+  let timeout: ReturnType<typeof setTimeout> | undefined
+  try {
+    return (await Promise.race([
+      supabase.functions.invoke<T>('ai-gateway', { body }),
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => reject(new Error('AI_GATEWAY_TIMEOUT')), AI_GATEWAY_TIMEOUT_MS)
+      }),
+    ])) as unknown as { data: T | null; error: { message: string } | null }
+  } finally {
+    if (timeout) clearTimeout(timeout)
+  }
+}
+
 export async function getAIStatus() {
   const { data, error } = await supabase.rpc('get_ai_status')
   throwIfError(error)
@@ -93,10 +122,8 @@ export async function getAIStatus() {
 }
 
 export async function testAIConnection() {
-  const response = (await supabase.functions.invoke<AIConnectivityResult>('ai-gateway', {
-    body: { action: 'connectivity_test' },
-  })) as unknown as { data: AIConnectivityResult | null; error: { message: string } | null }
-  throwIfError(response.error)
+  const response = await invokeAIGateway<AIConnectivityResult>({ action: 'connectivity_test' })
+  await throwIfFunctionError(response.error)
   if (!response.data?.ok) throw new Error('AI_CONNECTIVITY_TEST_FAILED')
   return response.data
 }
@@ -110,10 +137,8 @@ export async function getEmbeddingStatus() {
 }
 
 export async function embedPendingSections() {
-  const response = (await supabase.functions.invoke<EmbeddingRunResult>('ai-gateway', {
-    body: { action: 'embed_pending' },
-  })) as unknown as { data: EmbeddingRunResult | null; error: { message: string } | null }
-  throwIfError(response.error)
+  const response = await invokeAIGateway<EmbeddingRunResult>({ action: 'embed_pending' })
+  await throwIfFunctionError(response.error)
   if (!response.data?.ok) throw new Error('EMBEDDING_RUN_FAILED')
   return response.data
 }
@@ -139,7 +164,10 @@ export async function listAIMessages(conversationId: string) {
     .filter((message) => message.role === 'assistant')
     .map((message) => message.id)
   if (!assistantIds.length)
-    return (messages ?? []).map((message) => ({ ...message, sources: [] })) as AIMessage[]
+    return (messages ?? []).map((message) => ({
+      ...message,
+      sources: [],
+    })) as AIMessage[]
 
   const { data: sources, error: sourceError } = await supabase
     .from('ai_message_sources')
@@ -169,10 +197,8 @@ export async function listAIMessages(conversationId: string) {
 }
 
 export async function sendAIMessage(question: string, conversationId: string | null) {
-  const response = (await supabase.functions.invoke<AIChatResult>('ai-gateway', {
-    body: { action: 'chat', question, conversationId },
-  })) as unknown as { data: AIChatResult | null; error: { message: string } | null }
-  throwIfError(response.error)
+  const response = await invokeAIGateway<AIChatResult>({ action: 'chat', question, conversationId })
+  await throwIfFunctionError(response.error)
   if (!response.data?.ok) throw new Error('AI_CHAT_FAILED')
   return response.data
 }

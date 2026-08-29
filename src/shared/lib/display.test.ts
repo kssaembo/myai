@@ -18,6 +18,8 @@ describe('knowledge display helpers', () => {
       '같은 이름의 항목이 이미 있습니다.',
     )
     expect(friendlyDataError(new Error('category depth exceeded'))).toContain('두 단계')
+    expect(friendlyDataError(new Error('GEMINI_TIMEOUT'))).toContain('시간이 초과')
+    expect(friendlyDataError(new Error('AI_GATEWAY_TIMEOUT'))).toContain('다시 시도')
   })
 
   it('formats stored UTC dates for the Korean interface', () => {
