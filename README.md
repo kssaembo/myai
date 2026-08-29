@@ -1,12 +1,12 @@
 # Personal AI Knowledge OS
 
-Current checkpoint: **Phase 2 Step 1 — AI Provider Foundation**.
+Current checkpoint: **Phase 2 Step 3 — Embedding Hybrid RAG**.
 
 개인이 장기간 축적하는 문서, 프로젝트, 아이디어와 그 근거를 관리하기 위한 Personal AI Knowledge OS입니다.
 
-V1 지식 저장·검색·Graph·Export 기반 위에 Gemini를 안전하게 호출하는 서버 Gateway, 사용자 인증, 무료 사용 보호 한도와 Provider 교체 경계를 추가했습니다.
-
-Jarvis 대화, RAG, Embedding과 Memory 기능은 아직 구현하지 않았습니다.
+V1 지식 저장·검색·Graph·Export 기반 위에 Gemini 서버 Gateway, 근거 기반 대화, 대화 기록,
+문서 Section 임베딩과 키워드·의미 혼합 검색을 추가했습니다. 문서별 AI 사용 동의가 켜진
+자료만 임베딩과 RAG에 사용됩니다.
 
 ## 요구 환경
 
@@ -55,6 +55,8 @@ npm run check
 
 세부 규칙은 [CONTRIBUTING.md](./CONTRIBUTING.md), [Supabase 설정 가이드](./docs/supabase-setup.md), [저장소 구조 문서](./docs/repository-structure.md)를 참고합니다.
 
-## 다음 단계 경계
+## 현재 단계 경계
 
-V2 Step 1 Gate는 API 키가 브라우저에 노출되지 않고, 로그인 사용자만 서버 Gateway를 통해 Gemini 연결 테스트를 수행하며 앱 내부 일일 한도가 기록되는 것입니다. 다음 단계부터 근거 검색과 Jarvis 대화 화면을 구현합니다.
+V2 Step 3 Gate는 허용된 문서의 active version Section만 768차원 벡터로 색인하고, 대화에서
+키워드 검색과 의미 검색을 결합해 출처를 저장하는 것입니다. 자동 추천·일일 브리핑·장기 Memory는
+후속 단계 범위입니다. 배포 절차는 [V2 Step 3 가이드](./docs/v2-step3-deployment.md)를 참고합니다.
