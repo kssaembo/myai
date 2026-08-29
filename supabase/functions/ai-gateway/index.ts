@@ -82,6 +82,10 @@ function json(origin: string, status: number, body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), { status, headers: headers(origin) })
 }
 
+function logStage(requestId: string, action: string, stage: string) {
+  console.log('AI gateway stage', { requestId, action, stage })
+}
+
 function findPublishableKey(value: unknown): string | null {
   if (typeof value === 'string' && (value.startsWith('sb_publishable_') || value.startsWith('eyJ')))
     return value
@@ -231,6 +235,9 @@ Deno.serve(async (request) => {
     body.action !== 'embed_pending'
   )
     return json(origin, 400, { error: 'ACTION_NOT_ALLOWED' })
+  const action = body.action
+  const requestId = crypto.randomUUID().slice(0, 8)
+  logStage(requestId, action, 'request_accepted')
 
   const { data: statusData, error: statusError } = await client.rpc('get_ai_status')
   if (statusError || !statusData || typeof statusData !== 'object' || Array.isArray(statusData))
@@ -240,13 +247,16 @@ Deno.serve(async (request) => {
   const model = String(settings.chat_model ?? '')
   const embeddingModel = String(settings.embedding_model ?? '')
   const provider = createAIProvider(providerName)
+  logStage(requestId, action, 'status_loaded')
 
   if (body.action === 'embed_pending') {
+    logStage(requestId, action, 'embedding_queue_started')
     const pendingResult = await client.rpc('get_pending_embedding_sections', {
       p_limit: EMBEDDING_BATCH_SIZE,
     })
     if (pendingResult.error) return json(origin, 500, { error: 'EMBEDDING_QUEUE_UNAVAILABLE' })
     const pending = (pendingResult.data ?? []) as PendingEmbeddingSection[]
+    logStage(requestId, action, 'embedding_queue_completed')
     if (!pending.length) {
       const current = await client.rpc('get_embedding_status')
       return json(origin, 200, { ok: true, processed: 0, status: current.data })
@@ -274,12 +284,14 @@ Deno.serve(async (request) => {
     const runId = String(reservation.run_id)
     const startedAt = performance.now()
     try {
+      logStage(requestId, action, 'provider_request_started')
       const result = await provider.embedTexts({
         model: embeddingModel,
         texts,
         taskType: 'RETRIEVAL_DOCUMENT',
         dimensions: EMBEDDING_DIMENSIONS,
       })
+      logStage(requestId, action, 'provider_request_completed')
       const saved = await client.rpc('save_section_embeddings', {
         p_model: embeddingModel,
         p_embeddings: pending.map((section, index) => ({
@@ -305,7 +317,7 @@ Deno.serve(async (request) => {
       })
     } catch (caught) {
       const code = caught instanceof Error ? caught.message.split(':')[0] : 'EMBEDDING_FAILED'
-      console.error('AI gateway embedding failure', code)
+      console.error('AI gateway failure', { requestId, action, code })
       await client.rpc('complete_ai_request', {
         p_run_id: runId,
         p_status: 'failed',
@@ -355,6 +367,7 @@ Deno.serve(async (request) => {
     const embeddingStatus = embeddingStatusResult.data as EmbeddingStatus | null
     if (!embeddingStatusResult.error && Number(embeddingStatus?.embedded_count ?? 0) > 0) {
       try {
+        logStage(requestId, action, 'semantic_retrieval_started')
         const queryEmbedding = await provider.embedTexts({
           model: embeddingModel,
           texts: [body.question.trim()],
@@ -369,14 +382,18 @@ Deno.serve(async (request) => {
         })
         if (!semanticResult.error)
           semanticSources = (semanticResult.data ?? []) as KnowledgeSource[]
+        logStage(requestId, action, 'semantic_retrieval_completed')
       } catch (caught) {
-        console.error(
-          'Semantic retrieval fallback',
-          caught instanceof Error ? caught.message.split(':')[0] : 'UNKNOWN',
-        )
+        console.error('Semantic retrieval fallback', {
+          requestId,
+          action,
+          code: caught instanceof Error ? caught.message.split(':')[0] : 'UNKNOWN',
+        })
       }
     }
+    logStage(requestId, action, 'knowledge_retrieval_started')
     sources = await retrieveKnowledge(client, body.question, semanticSources)
+    logStage(requestId, action, 'knowledge_retrieval_completed')
     systemInstruction = [
       '당신은 사용자의 개인 지식에 최적화된 한국어 AI 비서입니다.',
       '제공된 개인 지식을 최우선 근거로 사용하세요.',
@@ -400,12 +417,14 @@ Deno.serve(async (request) => {
   const runId = String(reservation.run_id)
   const startedAt = performance.now()
   try {
+    logStage(requestId, action, 'provider_request_started')
     const result = await provider.generateText({
       model,
       systemInstruction,
       prompt,
       maxOutputTokens,
     })
+    logStage(requestId, action, 'provider_request_completed')
     await client.rpc('complete_ai_request', {
       p_run_id: runId,
       p_status: 'completed',
@@ -459,7 +478,7 @@ Deno.serve(async (request) => {
     })
   } catch (caught) {
     const code = caught instanceof Error ? caught.message.split(':')[0] : 'AI_PROVIDER_ERROR'
-    console.error('AI gateway provider failure', code)
+    console.error('AI gateway failure', { requestId, action, code })
     await client.rpc('complete_ai_request', {
       p_run_id: runId,
       p_status: 'failed',

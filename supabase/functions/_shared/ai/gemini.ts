@@ -18,6 +18,24 @@ interface GeminiEmbeddingResponse {
   error?: { message?: string }
 }
 
+const GEMINI_TIMEOUT_MS = 25_000
+
+async function fetchGeminiJson<T>(url: string, init: RequestInit, timeoutCode: string) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS)
+  try {
+    const response = await fetch(url, { ...init, signal: controller.signal })
+    const payload = (await response.json()) as T
+    return { response, payload }
+  } catch (caught) {
+    if (controller.signal.aborted || (caught instanceof Error && caught.name === 'AbortError'))
+      throw new Error(timeoutCode)
+    throw caught
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
 function normalizeEmbedding(values: number[]) {
   const magnitude = Math.sqrt(values.reduce((sum, value) => sum + value * value, 0))
   if (!Number.isFinite(magnitude) || magnitude === 0) throw new Error('GEMINI_EMBEDDING_INVALID')
@@ -30,7 +48,7 @@ export class GeminiProvider implements AIProvider {
   constructor(private readonly apiKey: string) {}
 
   async generateText(request: AIGenerateRequest): Promise<AIGenerateResult> {
-    const response = await fetch(
+    const { response, payload } = await fetchGeminiJson<GeminiResponse>(
       `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(request.model)}:generateContent`,
       {
         method: 'POST',
@@ -44,8 +62,8 @@ export class GeminiProvider implements AIProvider {
           },
         }),
       },
+      'GEMINI_TIMEOUT',
     )
-    const payload = (await response.json()) as GeminiResponse
     if (!response.ok)
       throw new Error(`GEMINI_HTTP_${response.status}:${payload.error?.message ?? ''}`)
     const text = payload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('')
@@ -61,7 +79,7 @@ export class GeminiProvider implements AIProvider {
     if (!request.texts.length || request.texts.length > 20)
       throw new Error('GEMINI_EMBEDDING_BATCH_INVALID')
     const modelName = `models/${request.model}`
-    const response = await fetch(
+    const { response, payload } = await fetchGeminiJson<GeminiEmbeddingResponse>(
       `https://generativelanguage.googleapis.com/v1beta/${modelName}:batchEmbedContents`,
       {
         method: 'POST',
@@ -78,8 +96,8 @@ export class GeminiProvider implements AIProvider {
           })),
         }),
       },
+      'GEMINI_EMBED_TIMEOUT',
     )
-    const payload = (await response.json()) as GeminiEmbeddingResponse
     if (!response.ok)
       throw new Error(`GEMINI_EMBED_HTTP_${response.status}:${payload.error?.message ?? ''}`)
     const embeddings = payload.embeddings?.map((embedding) => embedding.values ?? []) ?? []

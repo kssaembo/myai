@@ -9,11 +9,15 @@ import {
   type AIConversation,
   type AIMessage,
 } from '@/entities/ai/api'
+import { getKnowledgeGraph, type GraphPage } from '@/entities/graph/api'
 import { listKnowledge, type KnowledgeRecord } from '@/entities/knowledge-item/api'
 import { formatDate, friendlyDataError } from '@/shared/lib/display'
 
+import { KnowledgeConstellation } from './KnowledgeConstellation'
+
 export function DashboardPage() {
   const [records, setRecords] = useState<KnowledgeRecord[]>([])
+  const [graph, setGraph] = useState<GraphPage | null>(null)
   const [conversations, setConversations] = useState<AIConversation[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<AIMessage[]>([])
@@ -24,9 +28,14 @@ export function DashboardPage() {
 
   const loadWorkspace = useCallback(async () => {
     try {
-      const [knowledge, chatList] = await Promise.all([listKnowledge(), listAIConversations()])
+      const [knowledge, chatList, knowledgeGraph] = await Promise.all([
+        listKnowledge(),
+        listAIConversations(),
+        getKnowledgeGraph(null).catch(() => null),
+      ])
       setRecords(knowledge)
       setConversations(chatList)
+      setGraph(knowledgeGraph)
     } catch (caught) {
       setError(friendlyDataError(caught))
     }
@@ -110,15 +119,30 @@ export function DashboardPage() {
   }
 
   const projects = records.filter((item) => item.nodeType.key === 'project').slice(0, 4)
-  const recentKnowledge = records.slice(0, 8)
+  const thoughtRecords = records
+    .filter((item) => ['idea', 'question', 'problem', 'lesson'].includes(item.nodeType.key))
+    .slice(0, 3)
+  const recentRecords = records.filter((item) => item.nodeType.key !== 'project').slice(0, 3)
+  const latestUserQuestion = [...messages]
+    .reverse()
+    .find((message) => message.role === 'user')?.content
+  const latestAssistant = [...messages].reverse().find((message) => message.role === 'assistant')
+  const activeSourceIds = new Set(latestAssistant?.sources.map((source) => source.itemId) ?? [])
+  const trimmedQuestion = question.trim()
+  const focusText = trimmedQuestion ? trimmedQuestion : (latestUserQuestion ?? '')
+  const suggestedQuestions = [
+    projects[0] ? `${projects[0].title}에서 지금 가장 먼저 해결할 문제는 무엇일까?` : null,
+    thoughtRecords[0] ? `${thoughtRecords[0].title}을 더 구체적인 실행안으로 발전시켜줘.` : null,
+    records.length ? '내 기록에서 반복되는 설계 원칙 세 가지를 찾아줘.' : null,
+  ].filter((value): value is string => Boolean(value))
 
   return (
     <section className="dashboard jarvis-dashboard" aria-labelledby="dashboard-title">
       <header className="jarvis-heading">
         <div>
           <p className="eyebrow">Personal Intelligence</p>
-          <h1 id="dashboard-title">무엇을 함께 생각해 볼까요?</h1>
-          <p>내가 저장한 프로젝트와 기록을 바탕으로 질문하고, 아이디어를 구체화하세요.</p>
+          <h1 id="dashboard-title">오늘, 무엇을 함께 생각할까요?</h1>
+          <p>질문 하나로 내 프로젝트와 기록을 연결하고 다음 생각까지 이어갑니다.</p>
         </div>
         <Link className="secondary-button" to="/imports">
           지식 추가
@@ -229,69 +253,94 @@ export function DashboardPage() {
           {error && <p className="assistant-error">{error}</p>}
         </article>
 
-        <aside className="content-card focus-card">
+        <aside className="content-card focus-card intelligence-rail">
           <header className="focus-card-heading">
             <div>
-              <p className="eyebrow">Current Focus</p>
-              <h2>진행 중인 프로젝트</h2>
+              <p className="eyebrow">For You</p>
+              <h2>지금의 맥락</h2>
             </div>
-            <Link className="text-action" to="/projects">
-              전체 보기
-            </Link>
+            <span className="live-context-badge">LIVE</span>
           </header>
-          <div className="focus-list">
-            {projects.length ? (
-              projects.map((project) => (
-                <Link to={`/projects/${project.id}`} key={project.id}>
-                  <span style={{ background: project.nodeType.color }} />
-                  <div>
-                    <strong>{project.title}</strong>
-                    <small>
-                      {project.summary?.trim()
-                        ? project.summary
-                        : `${formatDate(project.updated_at)} 업데이트`}
-                    </small>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <p className="compact-empty">프로젝트를 추가하면 최근 작업이 이곳에 표시됩니다.</p>
-            )}
+          <div className="intelligence-section">
+            <div className="intelligence-section-title">
+              <strong>진행 중인 프로젝트</strong>
+              <Link to="/projects">전체</Link>
+            </div>
+            <div className="focus-list compact">
+              {projects.length ? (
+                projects.slice(0, 3).map((project) => (
+                  <Link to={`/projects/${project.id}`} key={project.id}>
+                    <span style={{ background: project.nodeType.color }} />
+                    <div>
+                      <strong>{project.title}</strong>
+                      <small>
+                        {project.summary?.trim()
+                          ? project.summary
+                          : `${formatDate(project.updated_at)} 업데이트`}
+                      </small>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p className="compact-empty">프로젝트를 추가하면 현재 작업이 표시됩니다.</p>
+              )}
+            </div>
           </div>
-          <div className="focus-note">
-            <strong>{records.length}개의 개인 지식</strong>
-            <span>대화할 때 관련 기록을 자동으로 찾아 근거로 사용합니다.</span>
+          <div className="intelligence-section suggestion-section">
+            <div className="intelligence-section-title">
+              <strong>다음 질문 추천</strong>
+              <span>내 기록 기반</span>
+            </div>
+            <div className="suggestion-list">
+              {suggestedQuestions.length ? (
+                suggestedQuestions.map((suggestion) => (
+                  <button type="button" key={suggestion} onClick={() => setQuestion(suggestion)}>
+                    <span>↗</span>
+                    {suggestion}
+                  </button>
+                ))
+              ) : (
+                <p className="compact-empty">지식을 추가하면 이어서 물어볼 질문을 제안합니다.</p>
+              )}
+            </div>
+          </div>
+          <div className="intelligence-section recent-flow-section">
+            <div className="intelligence-section-title">
+              <strong>최근 흐름</strong>
+              <span>{records.length}개 지식</span>
+            </div>
+            <div className="recent-flow-list">
+              {recentRecords.map((record) => (
+                <Link to={`/knowledge/${record.id}`} key={record.id}>
+                  <span>{record.nodeType.label_ko}</span>
+                  <strong>{record.title}</strong>
+                  <time>{formatDate(record.updated_at)}</time>
+                </Link>
+              ))}
+            </div>
           </div>
         </aside>
       </div>
 
-      <article className="content-card knowledge-landscape">
+      <article className="content-card knowledge-landscape constellation-card">
         <header className="focus-card-heading">
           <div>
-            <p className="eyebrow">Knowledge Landscape</p>
-            <h2>최근 축적된 지식</h2>
+            <p className="eyebrow">Thought Map</p>
+            <h2>생각의 연결</h2>
+            <p className="constellation-description">
+              질문을 입력하거나 답변을 받으면 관련 지식과 실제 Relation이 활성화됩니다.
+            </p>
           </div>
           <Link className="text-action" to="/knowledge">
             지식 관리
           </Link>
         </header>
-        <div className="knowledge-orbit">
-          {recentKnowledge.length ? (
-            recentKnowledge.map((item, index) => (
-              <Link
-                className={`knowledge-orbit-node size-${(index % 3) + 1}`}
-                style={{ '--node-color': item.nodeType.color } as React.CSSProperties}
-                to={`/knowledge/${item.id}`}
-                key={item.id}
-              >
-                <span>{item.nodeType.label_ko}</span>
-                <strong>{item.title}</strong>
-              </Link>
-            ))
-          ) : (
-            <p className="compact-empty">오른쪽 위 ‘지식 추가’에서 첫 문서를 가져오세요.</p>
-          )}
-        </div>
+        <KnowledgeConstellation
+          records={records}
+          graph={graph}
+          focusText={focusText}
+          activeSourceIds={activeSourceIds}
+        />
       </article>
     </section>
   )

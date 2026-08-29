@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '@/features/auth/auth-context'
 
@@ -9,6 +9,10 @@ type IconName =
 const navigation: { label: string; to: string; icon: IconName; end?: boolean }[] = [
   { label: 'Home', to: '/', icon: 'dashboard', end: true },
   { label: 'Knowledge', to: '/knowledge', icon: 'knowledge' },
+  { label: 'Projects', to: '/projects', icon: 'projects' },
+  { label: 'Graph', to: '/graph', icon: 'graph' },
+  { label: 'Search', to: '/search', icon: 'search' },
+  { label: 'Imports', to: '/imports', icon: 'imports' },
 ]
 
 const pageTitles: Record<string, string> = {
@@ -120,6 +124,7 @@ export function AppShell() {
       setSignOutError(true)
     }
   }
+  const isHome = location.pathname === '/'
 
   return (
     <div className="app-shell">
@@ -176,33 +181,6 @@ export function AppShell() {
             <span>Trash</span>
           </NavLink>
         </nav>
-
-        <div className="sidebar-footer">
-          <div className="user-avatar" aria-hidden="true">
-            {user?.email?.slice(0, 1).toUpperCase() ?? 'U'}
-          </div>
-          <div className="user-summary">
-            <strong>개인 계정</strong>
-            <span>{user?.email}</span>
-          </div>
-          <button
-            className="icon-button logout-button"
-            type="button"
-            onClick={() => void handleSignOut()}
-            aria-label="로그아웃"
-            title="로그아웃"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              aria-hidden="true"
-            >
-              <path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9" />
-            </svg>
-          </button>
-        </div>
       </aside>
 
       <div className="app-workspace">
@@ -224,20 +202,81 @@ export function AppShell() {
                 <path d="M4 7h16M4 12h16M4 17h16" />
               </svg>
             </button>
-            <div>
-              <span className="header-context">Workspace</span>
-              <strong>{getPageTitle(location.pathname)}</strong>
-            </div>
+            <Link className="header-brand" to="/">
+              <div className="brand-mark compact" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </div>
+              <div>
+                <strong>MY AI</strong>
+                <span>{isHome ? 'Personal Intelligence' : getPageTitle(location.pathname)}</span>
+              </div>
+            </Link>
           </div>
           <div className="header-actions">
-            <form
-              className="global-search"
-              role="search"
-              onSubmit={(event) => {
-                event.preventDefault()
-                const query = globalSearchRef.current?.value.trim() ?? ''
-                void navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
-              }}
+            {!isHome && (
+              <form
+                className="global-search"
+                role="search"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  const query = globalSearchRef.current?.value.trim() ?? ''
+                  void navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
+                }}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="6" />
+                  <path d="m16 16 4 4" />
+                </svg>
+                <span className="sr-only">전체 검색</span>
+                <input
+                  ref={globalSearchRef}
+                  key={location.pathname === '/search' ? location.search : 'global-search'}
+                  type="search"
+                  defaultValue={
+                    location.pathname === '/search'
+                      ? (new URLSearchParams(location.search).get('q') ?? '')
+                      : ''
+                  }
+                  placeholder="전체 지식 검색"
+                />
+                <kbd>⌘ K</kbd>
+              </form>
+            )}
+            <button
+              className="header-button"
+              type="button"
+              onClick={() => void navigate('/imports')}
+              title="원본 파일 업로드"
+            >
+              지식 가져오기
+            </button>
+            <button
+              className="icon-button utility-button"
+              type="button"
+              onClick={() => void navigate('/settings/ai')}
+              aria-label="설정"
+              title="설정"
+            >
+              <NavigationIcon name="settings" />
+            </button>
+            <div className="header-account" title={user?.email ?? '개인 계정'}>
+              <span>{user?.email?.slice(0, 1).toUpperCase() ?? 'U'}</span>
+              <small>{user?.email}</small>
+            </div>
+            <button
+              className="icon-button utility-button"
+              type="button"
+              onClick={() => void handleSignOut()}
+              aria-label="로그아웃"
+              title="로그아웃"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -246,38 +285,8 @@ export function AppShell() {
                 strokeWidth="1.8"
                 aria-hidden="true"
               >
-                <circle cx="11" cy="11" r="6" />
-                <path d="m16 16 4 4" />
+                <path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9" />
               </svg>
-              <span className="sr-only">전체 검색</span>
-              <input
-                ref={globalSearchRef}
-                key={location.pathname === '/search' ? location.search : 'global-search'}
-                type="search"
-                defaultValue={
-                  location.pathname === '/search'
-                    ? (new URLSearchParams(location.search).get('q') ?? '')
-                    : ''
-                }
-                placeholder="전체 지식 검색"
-              />
-              <kbd>⌘ K</kbd>
-            </form>
-            <button
-              className="header-button"
-              type="button"
-              onClick={() => void navigate('/imports')}
-              title="원본 파일 업로드"
-            >
-              업로드
-            </button>
-            <button
-              className="primary-button compact-button"
-              type="button"
-              onClick={() => void navigate('/knowledge/new')}
-              title="새 지식 만들기"
-            >
-              새 지식
             </button>
           </div>
         </header>
