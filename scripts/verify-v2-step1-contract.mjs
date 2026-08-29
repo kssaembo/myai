@@ -45,7 +45,10 @@ for (const fragment of [
   if (!gateway.includes(fragment)) throw new Error(`V2 gateway security missing: ${fragment}`)
 }
 
-if (!client.includes("supabase.functions.invoke<AIConnectivityResult>('ai-gateway'"))
+if (
+  !client.includes("supabase.functions.invoke<T>('ai-gateway'") ||
+  !client.includes('invokeAIGateway<AIConnectivityResult>')
+)
   throw new Error('V2 browser client must call the server-side AI gateway.')
 
 const browserSources = await Promise.all([
