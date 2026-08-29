@@ -19,9 +19,15 @@ npx supabase secrets set APP_ORIGINS="https://실제주소.vercel.app,http://loc
 
 Dashboard의 Edge Functions Secret 관리 화면에서도 같은 이름으로 등록할 수 있습니다. `APP_ORIGINS`는 쉼표로 구분한 정확한 Origin 목록입니다.
 
+- 운영 주소만 사용할 경우: `https://실제주소.vercel.app`
+- 로컬 개발도 허용할 경우: `https://실제주소.vercel.app,http://localhost:5173`
+- 경로와 마지막 `/`는 넣지 않습니다.
+
 ## 3. Function 배포
 
 ```bash
+npx supabase login
+npx supabase link --project-ref 실제_PROJECT_REF
 npx supabase functions deploy ai-gateway --no-verify-jwt
 ```
 
