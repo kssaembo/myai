@@ -212,7 +212,7 @@ declare
   next_target uuid;
   next_canonical_source uuid;
   next_canonical_target uuid;
-  symmetric boolean;
+  relation_is_symmetric boolean;
   moved_evidence integer := 0;
 begin
   if current_owner is null then raise exception 'AUTHENTICATION_REQUIRED'; end if;
@@ -282,9 +282,9 @@ begin
       where id = relation_record.id;
       continue;
     end if;
-    symmetric := relation_record.is_symmetric;
-    next_canonical_source := case when symmetric and next_source > next_target then next_target else next_source end;
-    next_canonical_target := case when symmetric and next_source > next_target then next_source else next_target end;
+    relation_is_symmetric := relation_record.is_symmetric;
+    next_canonical_source := case when relation_is_symmetric and next_source > next_target then next_target else next_source end;
+    next_canonical_target := case when relation_is_symmetric and next_source > next_target then next_source else next_target end;
     select id into existing_relation_id from public.relations
     where owner_id = current_owner and id <> relation_record.id and deleted_at is null
       and relation_type_id = relation_record.relation_type_id
