@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import {
@@ -45,6 +45,7 @@ export function DashboardPage() {
   const [refReadiness, setRefReadiness] = useState<RefAIReadiness | null>(null)
   const [isAllowingRefs, setIsAllowingRefs] = useState(false)
   const [isRelationshipAnalyzing, setIsRelationshipAnalyzing] = useState(false)
+  const [analysisProjectIds, setAnalysisProjectIds] = useState<string[] | null>(null)
   const [isBriefing, setIsBriefing] = useState(false)
   const [question, setQuestion] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -183,13 +184,31 @@ export function DashboardPage() {
     }
   }
 
-  const allProjects = records.filter((item) => item.nodeType.key === 'project')
-  const eligibleProjectIds = new Set(
-    refReadiness?.projects
-      .filter((project) => project.eligible)
-      .map((project) => project.projectId) ?? [],
+  const allProjects = useMemo(
+    () => records.filter((item) => item.nodeType.key === 'project'),
+    [records],
   )
-  const projects = allProjects.filter((project) => eligibleProjectIds.has(project.id)).slice(0, 4)
+  const eligibleProjectIds = useMemo(
+    () =>
+      new Set(
+        refReadiness?.projects
+          .filter((project) => project.eligible)
+          .map((project) => project.projectId) ?? [],
+      ),
+    [refReadiness],
+  )
+  const eligibleProjects = useMemo(
+    () => allProjects.filter((project) => eligibleProjectIds.has(project.id)),
+    [allProjects, eligibleProjectIds],
+  )
+  const effectiveAnalysisProjectIds = (
+    analysisProjectIds ?? eligibleProjects.slice(0, 4).map((project) => project.id)
+  )
+    .filter((id) => eligibleProjectIds.has(id))
+    .slice(0, 4)
+  const analysisProjects = eligibleProjects.filter((project) =>
+    effectiveAnalysisProjectIds.includes(project.id),
+  )
 
   const allowRefAI = async () => {
     if (isAllowingRefs) return
@@ -208,7 +227,7 @@ export function DashboardPage() {
 
   const analyzeRelationships = async () => {
     if (isRelationshipAnalyzing) return
-    if (projects.length < 2) {
+    if (analysisProjects.length < 2) {
       setError('관계 분석에는 AI 허용 REF 근거가 있는 프로젝트가 2개 이상 필요합니다.')
       return
     }
@@ -217,7 +236,7 @@ export function DashboardPage() {
     setIsRelationshipAnalyzing(true)
     try {
       const result = await runRelationshipAnalysis(
-        projects.map((project) => project.id),
+        analysisProjects.map((project) => project.id),
         false,
       )
       setRelationshipNotice(
@@ -382,8 +401,8 @@ export function DashboardPage() {
               <Link to="/projects">전체</Link>
             </div>
             <div className="focus-list compact">
-              {projects.length ? (
-                projects.slice(0, 3).map((project) => (
+              {allProjects.length ? (
+                allProjects.slice(0, 3).map((project) => (
                   <Link to={`/projects/${project.id}`} key={project.id}>
                     <span style={{ background: project.nodeType.color }} />
                     <div>
@@ -485,11 +504,39 @@ export function DashboardPage() {
             <button
               className="relationship-analysis-button"
               type="button"
-              disabled={isRelationshipAnalyzing || projects.length < 2}
+              disabled={isRelationshipAnalyzing || analysisProjects.length < 2}
               onClick={() => void analyzeRelationships()}
             >
               {isRelationshipAnalyzing ? '관계 분석 중…' : '관계 분석'}
             </button>
+            {!!eligibleProjects.length && (
+              <details className="analysis-project-picker">
+                <summary>분석 대상 {analysisProjects.length}개</summary>
+                <div>
+                  <p>한 번에 2~4개를 비교합니다.</p>
+                  {eligibleProjects.map((project) => {
+                    const checked = effectiveAnalysisProjectIds.includes(project.id)
+                    return (
+                      <label key={project.id}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={!checked && effectiveAnalysisProjectIds.length >= 4}
+                          onChange={() =>
+                            setAnalysisProjectIds(
+                              effectiveAnalysisProjectIds.includes(project.id)
+                                ? effectiveAnalysisProjectIds.filter((id) => id !== project.id)
+                                : [...effectiveAnalysisProjectIds, project.id],
+                            )
+                          }
+                        />
+                        <span>{project.title}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </details>
+            )}
             {refReadiness && refReadiness.allowedRefDocuments < refReadiness.totalRefDocuments && (
               <button
                 className="text-action"
@@ -505,8 +552,9 @@ export function DashboardPage() {
             </Link>
             {refReadiness && (
               <small className="relationship-analysis-status">
-                분석 가능 프로젝트 {projects.length}/{allProjects.length} · AI 허용 REF{' '}
-                {refReadiness.allowedRefDocuments}/{refReadiness.totalRefDocuments}
+                분석 가능 프로젝트 {eligibleProjects.length}/{allProjects.length} · 선택{' '}
+                {analysisProjects.length}/4 · AI 허용 REF {refReadiness.allowedRefDocuments}/
+                {refReadiness.totalRefDocuments}
               </small>
             )}
             {(relationshipNotice || relationshipRun?.status === 'completed') && (

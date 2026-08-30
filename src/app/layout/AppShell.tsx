@@ -2,6 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '@/features/auth/auth-context'
+import {
+  applyTheme,
+  getInitialTheme,
+  THEME_STORAGE_KEY,
+  type AppColorTheme,
+} from '@/shared/lib/theme'
 
 type IconName =
   'dashboard' | 'search' | 'knowledge' | 'projects' | 'graph' | 'imports' | 'settings' | 'trash'
@@ -103,7 +109,18 @@ export function AppShell() {
   const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [signOutError, setSignOutError] = useState(false)
+  const [theme, setTheme] = useState<AppColorTheme>(() =>
+    getInitialTheme(
+      window.localStorage.getItem(THEME_STORAGE_KEY),
+      window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false,
+    ),
+  )
   const globalSearchRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    applyTheme(theme)
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme)
+  }, [theme])
 
   useEffect(() => {
     const focusSearch = (event: KeyboardEvent) => {
@@ -250,6 +267,36 @@ export function AppShell() {
                 <kbd>⌘ K</kbd>
               </form>
             )}
+            <button
+              className="icon-button utility-button theme-toggle"
+              type="button"
+              onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+              aria-label={theme === 'dark' ? '라이트모드로 전환' : '다크모드로 전환'}
+              title={theme === 'dark' ? '라이트모드' : '다크모드'}
+            >
+              {theme === 'dark' ? (
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+                </svg>
+              ) : (
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  aria-hidden="true"
+                >
+                  <path d="M20.3 15.1A8.5 8.5 0 0 1 8.9 3.7 8.5 8.5 0 1 0 20.3 15.1Z" />
+                </svg>
+              )}
+            </button>
             <button
               className="header-button"
               type="button"

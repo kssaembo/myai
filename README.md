@@ -1,6 +1,6 @@
 # Personal AI Knowledge OS
 
-Current checkpoint: **Project-centered Knowledge Map — REF Readiness**.
+Current checkpoint: **Interactive Relationship Map · Project Comparison · Dark Mode**.
 
 개인이 장기간 축적하는 문서, 프로젝트, 아이디어와 그 근거를 관리하기 위한 Personal AI Knowledge OS입니다.
 
@@ -72,3 +72,4 @@ AI 관계 분석 배포와 사용법은 [AI 관계 분석 문서](./docs/ai-rela
 관계 지도 표시 원칙과 배포법은 [관계 지도 문서](./docs/visual-relationship-map.md)를 참고합니다.
 REF 업로드 자동 구조화와 쉬운 정보 표현은 [REF 자동 구조화 문서](./docs/ref-auto-structuring.md)를 참고합니다.
 프로젝트 중심 지도와 AI 분석 준비 상태는 [프로젝트 중심 지식지도 문서](./docs/project-centered-map.md)를 참고합니다.
+관계지도 조작, 프로젝트 비교, 다크모드는 [인터랙티브 관계·비교 지도 문서](./docs/visual-project-comparison.md)를 참고합니다.

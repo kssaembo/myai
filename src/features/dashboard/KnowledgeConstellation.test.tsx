@@ -1,10 +1,12 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import type { VisualRelationshipFoundation } from '@/entities/visual-analysis/api'
 
 import { KnowledgeConstellation } from './KnowledgeConstellation'
+
+afterEach(cleanup)
 
 const foundation: VisualRelationshipFoundation = {
   schema_version: 'visual-relations-v1',
@@ -83,5 +85,45 @@ describe('KnowledgeConstellation relationship map', () => {
       '두 서비스 모두 교사가 진행 상태를 통제하는 구조를 사용합니다.',
     )
     expect(screen.getByText('근거 1개')).toBeInTheDocument()
+  })
+
+  it('focuses the first-degree relationships of a selected project', () => {
+    render(
+      <MemoryRouter>
+        <KnowledgeConstellation
+          records={[]}
+          graph={null}
+          focusText=""
+          activeSourceIds={new Set()}
+          visualFoundation={foundation}
+        />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /레이저 장기/ }))
+    expect(screen.getByLabelText('선택한 프로젝트 연결 요약')).toHaveTextContent(
+      '직접 연결된 AI 관계 1개',
+    )
+    expect(screen.getByText('연결만 보기')).toBeInTheDocument()
+  })
+
+  it('switches to the project comparison view without opening another page', () => {
+    render(
+      <MemoryRouter>
+        <KnowledgeConstellation
+          records={[]}
+          graph={null}
+          focusText=""
+          activeSourceIds={new Set()}
+          visualFoundation={foundation}
+        />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '프로젝트 비교' }))
+    const comparisonMap = screen.getByLabelText('프로젝트 비교 지도')
+    expect(comparisonMap).toBeInTheDocument()
+    expect(comparisonMap.querySelector('.comparison-metrics')).toHaveTextContent('1 공통 연결')
+    expect(screen.getByText('구조')).toBeInTheDocument()
   })
 })

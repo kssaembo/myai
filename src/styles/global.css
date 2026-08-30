@@ -165,6 +165,139 @@
   }
 }
 
+:root[data-theme='dark'] {
+  color: #e8eef5;
+  background: #08111d;
+  --ink: #e8eef5;
+  --muted: #91a1b3;
+  --line: #243244;
+  --surface: #101b29;
+  --surface-soft: #0c1623;
+  --navy: #dbe9f5;
+  --navy-deep: #07111d;
+  --teal: #35c8b9;
+  --teal-dark: #69ded2;
+  --teal-soft: #113b39;
+  --danger: #ff7d88;
+  --danger-soft: #3d1e25;
+  --success: #70d4c8;
+}
+:root[data-theme='dark'] body,
+:root[data-theme='dark'] .app-shell,
+:root[data-theme='dark'] .app-workspace,
+:root[data-theme='dark'] .app-content {
+  background: #08111d;
+}
+:root[data-theme='dark'] .app-header,
+:root[data-theme='dark'] .content-card,
+:root[data-theme='dark'] .knowledge-card,
+:root[data-theme='dark'] .search-result-card,
+:root[data-theme='dark'] .filter-bar,
+:root[data-theme='dark'] .taxonomy-editor,
+:root[data-theme='dark'] .taxonomy-list-card,
+:root[data-theme='dark'] .detail-card,
+:root[data-theme='dark'] .modal-card {
+  color: var(--ink);
+  border-color: var(--line);
+  background: var(--surface);
+}
+:root[data-theme='dark'] .sidebar {
+  color: #cbd8e5;
+  background: #07111d;
+  border-color: #1d2a39;
+}
+:root[data-theme='dark'] .navigation-link:hover,
+:root[data-theme='dark'] .navigation-link.active {
+  color: #effffc;
+  background: #12302f;
+}
+:root[data-theme='dark'] input,
+:root[data-theme='dark'] select,
+:root[data-theme='dark'] textarea,
+:root[data-theme='dark'] .global-search,
+:root[data-theme='dark'] .header-button,
+:root[data-theme='dark'] .icon-button,
+:root[data-theme='dark'] .secondary-button {
+  color: var(--ink);
+  border-color: var(--line);
+  background: #0c1724;
+}
+:root[data-theme='dark'] .assistant-messages,
+:root[data-theme='dark'] .assistant-composer,
+:root[data-theme='dark'] .intelligence-section,
+:root[data-theme='dark'] .relationship-map-shell,
+:root[data-theme='dark'] .relationship-insight-summary,
+:root[data-theme='dark'] .visual-map-experience {
+  border-color: var(--line);
+  background: var(--surface);
+}
+:root[data-theme='dark'] .constellation-canvas,
+:root[data-theme='dark'] .project-cluster-map,
+:root[data-theme='dark'] .relationship-map-canvas,
+:root[data-theme='dark'] .project-comparison-map {
+  background:
+    linear-gradient(rgb(111 146 173 / 8%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(111 146 173 / 8%) 1px, transparent 1px),
+    radial-gradient(circle at center, rgb(53 200 185 / 10%), transparent 44%), #0a1420;
+  background-size:
+    32px 32px,
+    32px 32px,
+    auto,
+    auto;
+}
+:root[data-theme='dark'] .constellation-canvas::after {
+  background: linear-gradient(90deg, #0a1420, transparent 8%, transparent 92%, #0a1420);
+}
+:root[data-theme='dark'] .relationship-project-node,
+:root[data-theme='dark'] .relationship-insight-node,
+:root[data-theme='dark'] .project-cluster-root,
+:root[data-theme='dark'] .project-cluster-child,
+:root[data-theme='dark'] .constellation-node {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--node-color) 52%, var(--line));
+  background: color-mix(in srgb, var(--node-color) 14%, #101b29);
+  box-shadow: 0 11px 28px rgb(0 0 0 / 28%);
+}
+:root[data-theme='dark'] .relationship-project-node strong,
+:root[data-theme='dark'] .relationship-insight-node strong,
+:root[data-theme='dark'] .project-cluster-root strong,
+:root[data-theme='dark'] .project-cluster-child strong,
+:root[data-theme='dark'] .constellation-node strong,
+:root[data-theme='dark'] .relationship-summary-heading h3 {
+  color: var(--ink);
+}
+:root[data-theme='dark'] .relationship-map-summary,
+:root[data-theme='dark'] .comparison-project-picker,
+:root[data-theme='dark'] .comparison-board,
+:root[data-theme='dark'] .comparison-metrics span,
+:root[data-theme='dark'] .comparison-project-options button,
+:root[data-theme='dark'] .analysis-project-picker > div,
+:root[data-theme='dark'] .analysis-project-picker summary {
+  border-color: var(--line);
+  background: rgb(16 27 41 / 94%);
+}
+:root[data-theme='dark'] .comparison-insight,
+:root[data-theme='dark'] .comparison-project-headings,
+:root[data-theme='dark'] .comparison-row > strong,
+:root[data-theme='dark'] .map-controls button {
+  color: var(--ink);
+  border-color: var(--line);
+  background: var(--surface-soft);
+}
+:root[data-theme='dark'] .comparison-project-options button.is-selected {
+  color: #8af0e6;
+  border-color: #3b948b;
+  background: #153b39;
+}
+:root[data-theme='dark'] .chat-message.assistant > div,
+:root[data-theme='dark'] .assistant-welcome,
+:root[data-theme='dark'] .briefing-recommendation,
+:root[data-theme='dark'] .recent-flow-list a {
+  color: var(--ink);
+  border-color: var(--line);
+  background: var(--surface-soft);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -1726,6 +1859,33 @@ a {
 .relationship-map-shell {
   background: #fbfdfd;
 }
+.visual-map-experience {
+  background: var(--surface);
+}
+.visual-map-mode-toggle {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-soft);
+}
+.visual-map-mode-toggle button {
+  min-height: 34px;
+  padding: 0 0.8rem;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 800;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+}
+.visual-map-mode-toggle button.is-active {
+  color: var(--teal-dark);
+  border-color: color-mix(in srgb, var(--teal) 30%, var(--line));
+  background: var(--surface);
+  box-shadow: 0 5px 16px rgb(17 42 57 / 6%);
+}
 .relationship-map-canvas {
   min-height: 520px;
   background:
@@ -1737,6 +1897,72 @@ a {
     32px 32px,
     32px 32px,
     auto;
+}
+.relationship-map-viewport {
+  cursor: grab;
+  touch-action: none;
+}
+.relationship-map-viewport:active {
+  cursor: grabbing;
+}
+.relationship-map-world {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  transform-origin: 50% 50%;
+  transition: transform 80ms ease-out;
+}
+.relationship-map-world > svg {
+  z-index: 1;
+}
+.map-controls {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 8;
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  box-shadow: 0 9px 25px rgb(18 38 52 / 10%);
+  backdrop-filter: blur(10px);
+}
+.map-controls button {
+  min-width: 34px;
+  min-height: 32px;
+  padding: 0 0.55rem;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 800;
+  border: 0;
+  border-radius: 7px;
+  background: var(--surface-soft);
+}
+.relationship-map-node {
+  user-select: none;
+  touch-action: none;
+  cursor: grab;
+  transition:
+    opacity 160ms ease,
+    filter 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+.relationship-map-node:active {
+  cursor: grabbing;
+}
+.relationship-map-node.is-dimmed,
+.relationship-insight-line.is-dimmed,
+.relationship-direct-line.is-dimmed {
+  opacity: 0.12;
+  filter: grayscale(0.65);
+}
+.relationship-project-node.is-selected {
+  border-color: var(--node-color);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--node-color) 14%, transparent);
 }
 .relationship-map-summary {
   position: absolute;
@@ -1937,6 +2163,206 @@ a {
 }
 .relationship-evidence-details li {
   max-width: 900px;
+}
+.analysis-project-picker {
+  position: relative;
+  font-size: 0.62rem;
+}
+.analysis-project-picker summary {
+  padding: 0.55rem 0.7rem;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  font-weight: 800;
+  cursor: pointer;
+}
+.analysis-project-picker > div {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  z-index: 20;
+  display: grid;
+  width: 280px;
+  max-height: 300px;
+  gap: 0.3rem;
+  padding: 0.8rem;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 18px 45px rgb(17 36 52 / 16%);
+}
+.analysis-project-picker p {
+  margin: 0 0 0.4rem;
+  color: var(--muted);
+}
+.analysis-project-picker label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem;
+  border-radius: 7px;
+}
+.analysis-project-picker label:hover {
+  background: var(--surface-soft);
+}
+.analysis-project-picker span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.project-comparison-map {
+  min-height: 520px;
+  padding: 1rem;
+  background:
+    linear-gradient(rgb(16 47 73 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(16 47 73 / 3%) 1px, transparent 1px), var(--surface-soft);
+  background-size: 32px 32px;
+}
+.comparison-project-picker {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(8px);
+}
+.comparison-project-picker > div:first-child {
+  display: grid;
+  min-width: 120px;
+  gap: 0.2rem;
+}
+.comparison-project-picker strong {
+  font-size: 0.7rem;
+}
+.comparison-project-picker span {
+  color: var(--muted);
+  font-size: 0.56rem;
+}
+.comparison-project-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+.comparison-project-options button {
+  max-width: 190px;
+  min-height: 32px;
+  padding: 0.35rem 0.65rem;
+  overflow: hidden;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.6rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+.comparison-project-options button.is-selected {
+  color: #08766c;
+  border-color: #75cfc6;
+  background: var(--teal-soft);
+}
+.comparison-metrics {
+  display: flex;
+  gap: 0.7rem;
+  margin: 0.8rem 0;
+}
+.comparison-metrics span {
+  padding: 0.45rem 0.65rem;
+  color: var(--muted);
+  font-size: 0.58rem;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+}
+.comparison-metrics strong {
+  color: var(--teal-dark);
+  font-size: 0.78rem;
+}
+.comparison-board {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+}
+.comparison-project-headings,
+.comparison-row {
+  display: grid;
+  min-width: 720px;
+  grid-template-columns: 110px repeat(var(--comparison-count, 4), minmax(150px, 1fr));
+}
+.comparison-project-headings {
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-soft);
+}
+.comparison-project-headings > *,
+.comparison-row > * {
+  padding: 0.75rem;
+  border-right: 1px solid var(--line);
+}
+.comparison-project-headings > *:last-child,
+.comparison-row > *:last-child {
+  border-right: 0;
+}
+.comparison-project-headings span,
+.comparison-project-headings strong {
+  font-size: 0.62rem;
+}
+.comparison-row {
+  border-bottom: 1px solid var(--line);
+}
+.comparison-row:last-child {
+  border-bottom: 0;
+}
+.comparison-row > strong {
+  color: var(--teal-dark);
+  font-size: 0.64rem;
+  background: var(--surface-soft);
+}
+.comparison-row > div {
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+}
+.comparison-row small {
+  color: var(--muted);
+  font-size: 0.56rem;
+}
+.comparison-insight {
+  padding: 0.55rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--teal);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+.comparison-insight.difference {
+  border-left-color: #e66b2e;
+}
+.comparison-insight span {
+  color: var(--muted);
+  font-size: 0.5rem;
+  font-weight: 850;
+}
+.comparison-insight p {
+  margin: 0.22rem 0 0;
+  color: var(--ink);
+  font-size: 0.58rem;
+  line-height: 1.45;
+}
+.comparison-empty {
+  display: grid;
+  min-height: 350px;
+  place-content: center;
+  color: var(--muted);
+  font-size: 0.72rem;
 }
 .constellation-empty {
   position: absolute;
