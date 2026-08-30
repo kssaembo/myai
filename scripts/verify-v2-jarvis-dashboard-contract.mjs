@@ -16,7 +16,7 @@ for (const fragment of ['isHome', 'header-brand', '지식 가져오기', 'isSide
 
 for (const fragment of [
   'KnowledgeConstellation',
-  '다음 질문 추천',
+  'AI 브리핑',
   '최근 흐름',
   '진행 중인 프로젝트',
   'activeSourceIds',

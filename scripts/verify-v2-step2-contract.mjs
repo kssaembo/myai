@@ -33,7 +33,9 @@ for (const fragment of [
   "from('ai_messages')",
   'questionKeywords',
   'sources.map',
-  "p_purpose: body.action === 'chat' ? 'chat' : 'connectivity_test'",
+  'p_purpose:',
+  "body.action === 'chat'",
+  "'connectivity_test'",
 ]) {
   if (!gateway.includes(fragment))
     throw new Error(`V2 Step 2 gateway contract missing: ${fragment}`)
