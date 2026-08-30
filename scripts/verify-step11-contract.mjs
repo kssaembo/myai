@@ -45,6 +45,8 @@ for (const forbidden of [
   'delete from public.item_evidence',
   'delete from public.relation_evidence',
   'document_versions set',
+  '\n  symmetric boolean;',
+  '\n    symmetric :=',
 ]) {
   if (migration.toLowerCase().includes(forbidden))
     throw new Error(`Step 11 Evidence/original loss risk: ${forbidden}`)
