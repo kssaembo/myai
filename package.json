@@ -43,10 +43,11 @@
     "verify:v2-jarvis-dashboard-contract": "node scripts/verify-v2-jarvis-dashboard-contract.mjs",
     "verify:v2-step5-contract": "node scripts/verify-v2-step5-contract.mjs",
     "verify:visual-relationship-foundation": "node scripts/verify-visual-relationship-foundation-contract.mjs",
+    "verify:ai-relationship-analysis": "node scripts/verify-ai-relationship-analysis-contract.mjs",
     "verify:ref-corpus": "node scripts/verify-ref-corpus.mjs",
     "evaluate:search": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.verification.local scripts/evaluate-search.mjs",
     "verify:supabase": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.verification.local scripts/verify-supabase-foundation.mjs",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run verify:foundation-contract && npm run verify:step5-contract && npm run verify:step6-contract && npm run verify:step7-contract && npm run verify:step8-contract && npm run verify:step9-contract && npm run verify:step10-contract && npm run verify:step11-contract && npm run verify:step12-contract && npm run verify:step13-contract && npm run verify:v2-step1-contract && npm run verify:v2-step2-contract && npm run verify:v2-step3-contract && npm run verify:v2-ai-timeout-contract && npm run verify:v2-jarvis-dashboard-contract && npm run verify:v2-step5-contract && npm run verify:visual-relationship-foundation && npm run build"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run verify:foundation-contract && npm run verify:step5-contract && npm run verify:step6-contract && npm run verify:step7-contract && npm run verify:step8-contract && npm run verify:step9-contract && npm run verify:step10-contract && npm run verify:step11-contract && npm run verify:step12-contract && npm run verify:step13-contract && npm run verify:v2-step1-contract && npm run verify:v2-step2-contract && npm run verify:v2-step3-contract && npm run verify:v2-ai-timeout-contract && npm run verify:v2-jarvis-dashboard-contract && npm run verify:v2-step5-contract && npm run verify:visual-relationship-foundation && npm run verify:ai-relationship-analysis && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",
