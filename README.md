@@ -1,6 +1,6 @@
 # Personal AI Knowledge OS
 
-Current checkpoint: **Visual Knowledge OS Step 2 — AI Relationship Analysis**.
+Current checkpoint: **Visual Knowledge OS Step 3 — Visual Relationship Map**.
 
 개인이 장기간 축적하는 문서, 프로젝트, 아이디어와 그 근거를 관리하기 위한 Personal AI Knowledge OS입니다.
 
@@ -69,3 +69,4 @@ AI 요청 무한 대기 수정 배포는 [AI Gateway 안정화 가이드](./docs
 개인화 브리핑 배포는 [V2 Step 5 가이드](./docs/v2-step5-personal-briefing.md)를 따릅니다.
 Visual Knowledge 관계 데이터 설계는 [관계 데이터 기반 문서](./docs/visual-relationship-foundation.md)를 참고합니다.
 AI 관계 분석 배포와 사용법은 [AI 관계 분석 문서](./docs/ai-relationship-analysis.md)를 참고합니다.
+관계 지도 표시 원칙과 배포법은 [관계 지도 문서](./docs/visual-relationship-map.md)를 참고합니다.
