@@ -82,6 +82,53 @@ interface BriefingPayload {
   recommendations: BriefingRecommendation[]
 }
 
+interface RelationshipContextSource {
+  sourceId: string
+  itemId: string
+  itemTitle: string
+  itemType: string
+  relationType: string
+  documentId: string
+  versionId: string
+  sectionId: string
+  headingPath: string[]
+  text: string
+}
+
+interface RelationshipContextProject {
+  projectId: string
+  title: string
+  summary: string | null
+  updatedAt: string
+  sources: RelationshipContextSource[]
+}
+
+interface RelationshipContext {
+  schemaVersion: string
+  projects: RelationshipContextProject[]
+}
+
+interface RelationshipInsightPayload {
+  kind:
+    | 'commonality'
+    | 'difference'
+    | 'technical_link'
+    | 'reusable_component'
+    | 'recurring_problem'
+    | 'solution_pattern'
+    | 'development_pattern'
+    | 'educational_link'
+  dimension: string
+  title: string
+  summary: string
+  confidence: number
+  importance: number
+  projectIds: string[]
+  sourceIds: string[]
+  keywords: string[]
+  projectNotes: { projectId: string; note: string }[]
+}
+
 function allowedOrigin(request: Request) {
   const origin = request.headers.get('origin') ?? ''
   const allowed = (Deno.env.get('APP_ORIGINS') ?? '')
@@ -276,6 +323,120 @@ function briefingRow(row: Record<string, unknown>) {
   }
 }
 
+async function sha256(value: string) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+function cleanJsonObject(text: string): Record<string, unknown> {
+  const normalized = text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/, '')
+  try {
+    const candidate = JSON.parse(normalized) as unknown
+    if (candidate && typeof candidate === 'object' && !Array.isArray(candidate))
+      return candidate as Record<string, unknown>
+  } catch {
+    // Converted to the stable error below.
+  }
+  throw new Error('AI_RELATIONSHIP_JSON_INVALID')
+}
+
+function parseRelationshipInsights(
+  text: string,
+  context: RelationshipContext,
+): RelationshipInsightPayload[] {
+  const candidate = cleanJsonObject(text)
+  if (!Array.isArray(candidate.insights) || !candidate.insights.length)
+    throw new Error('AI_RELATIONSHIP_INSIGHTS_INVALID')
+  const allowedKinds = new Set([
+    'commonality',
+    'difference',
+    'technical_link',
+    'reusable_component',
+    'recurring_problem',
+    'solution_pattern',
+    'development_pattern',
+    'educational_link',
+  ])
+  const projectIds = new Set(context.projects.map((project) => project.projectId))
+  const sourceProjects = new Map<string, string>()
+  for (const project of context.projects)
+    for (const source of project.sources) sourceProjects.set(source.sourceId, project.projectId)
+
+  const results: RelationshipInsightPayload[] = []
+  for (const entry of candidate.insights.slice(0, 12)) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue
+    const value = entry as Record<string, unknown>
+    const kind = typeof value.kind === 'string' ? value.kind : ''
+    const dimension = typeof value.dimension === 'string' ? value.dimension.trim() : ''
+    const title = typeof value.title === 'string' ? value.title.trim().slice(0, 160) : ''
+    const summary = typeof value.summary === 'string' ? value.summary.trim().slice(0, 1200) : ''
+    const confidence = Number(value.confidence)
+    const importance = Number(value.importance)
+    const linkedProjects = Array.isArray(value.projectIds)
+      ? [...new Set(value.projectIds.filter((id): id is string => typeof id === 'string'))]
+          .filter((id) => projectIds.has(id))
+          .slice(0, 4)
+      : []
+    const sourceIds = Array.isArray(value.sourceIds)
+      ? [...new Set(value.sourceIds.filter((id): id is string => typeof id === 'string'))]
+          .filter((id) => sourceProjects.has(id))
+          .slice(0, 8)
+      : []
+    const coveredProjects = new Set(sourceIds.map((id) => sourceProjects.get(id)))
+    const keywords = Array.isArray(value.keywords)
+      ? [...new Set(value.keywords.filter((word): word is string => typeof word === 'string'))]
+          .map((word) => word.trim().slice(0, 40))
+          .filter(Boolean)
+          .slice(0, 6)
+      : []
+    const projectNotes = Array.isArray(value.projectNotes)
+      ? value.projectNotes
+          .map((note): { projectId: string; note: string } | null => {
+            if (!note || typeof note !== 'object' || Array.isArray(note)) return null
+            const record = note as Record<string, unknown>
+            const projectId = typeof record.projectId === 'string' ? record.projectId : ''
+            const noteText = typeof record.note === 'string' ? record.note.trim().slice(0, 300) : ''
+            return projectIds.has(projectId) && noteText ? { projectId, note: noteText } : null
+          })
+          .filter((note): note is { projectId: string; note: string } => note !== null)
+          .slice(0, 4)
+      : []
+    if (
+      !allowedKinds.has(kind) ||
+      !/^[a-z][a-z0-9_]*$/.test(dimension) ||
+      !title ||
+      !summary ||
+      !Number.isFinite(confidence) ||
+      confidence < 0 ||
+      confidence > 1 ||
+      !Number.isInteger(importance) ||
+      importance < 0 ||
+      importance > 5 ||
+      linkedProjects.length < 2 ||
+      sourceIds.length < 2 ||
+      coveredProjects.size < 2
+    )
+      continue
+    results.push({
+      kind: kind as RelationshipInsightPayload['kind'],
+      dimension,
+      title,
+      summary,
+      confidence,
+      importance,
+      projectIds: linkedProjects,
+      sourceIds,
+      keywords,
+      projectNotes,
+    })
+  }
+  if (!results.length) throw new Error('AI_RELATIONSHIP_INSIGHTS_INVALID')
+  return results
+}
+
 Deno.serve(async (request) => {
   const origin = allowedOrigin(request)
   if (origin === null) return new Response('Origin forbidden', { status: 403 })
@@ -298,13 +459,20 @@ Deno.serve(async (request) => {
   const { data: userData, error: userError } = await client.auth.getUser(token)
   if (userError || !userData.user) return json(origin, 401, { error: 'INVALID_SESSION' })
 
-  let body: { action?: unknown; question?: unknown; conversationId?: unknown; force?: unknown }
+  let body: {
+    action?: unknown
+    question?: unknown
+    conversationId?: unknown
+    force?: unknown
+    projectIds?: unknown
+  }
   try {
     body = (await request.json()) as {
       action?: unknown
       question?: unknown
       conversationId?: unknown
       force?: unknown
+      projectIds?: unknown
     }
   } catch {
     return json(origin, 400, { error: 'INVALID_JSON' })
@@ -313,7 +481,8 @@ Deno.serve(async (request) => {
     body.action !== 'connectivity_test' &&
     body.action !== 'chat' &&
     body.action !== 'embed_pending' &&
-    body.action !== 'briefing'
+    body.action !== 'briefing' &&
+    body.action !== 'relationship_analysis'
   )
     return json(origin, 400, { error: 'ACTION_NOT_ALLOWED' })
   const action = body.action
@@ -428,6 +597,8 @@ Deno.serve(async (request) => {
   let semanticInputTokens = 0
   let conversationId: string | null = null
   let briefingItems: BriefingKnowledgeItem[] = []
+  let relationshipContext: RelationshipContext | null = null
+  let visualAnalysisId: string | null = null
   let responseMimeType: 'application/json' | undefined
   if (body.action === 'chat') {
     if (typeof body.question !== 'string' || body.question.trim().length < 1)
@@ -537,6 +708,76 @@ Deno.serve(async (request) => {
     ].join('\n')
     maxOutputTokens = 700
     responseMimeType = 'application/json'
+  } else if (body.action === 'relationship_analysis') {
+    if (
+      !Array.isArray(body.projectIds) ||
+      body.projectIds.some((id) => typeof id !== 'string') ||
+      body.projectIds.length < 2 ||
+      body.projectIds.length > 4 ||
+      new Set(body.projectIds).size !== body.projectIds.length
+    )
+      return json(origin, 400, { error: 'RELATIONSHIP_ANALYSIS_PROJECTS_INVALID' })
+    const selectedProjectIds = body.projectIds as string[]
+    const contextResult = await client.rpc('get_relationship_analysis_context', {
+      p_project_ids: selectedProjectIds,
+      p_evidence_per_project: 10,
+    })
+    if (contextResult.error || !contextResult.data)
+      return json(origin, 422, {
+        error: contextResult.error?.message ?? 'RELATIONSHIP_ANALYSIS_CONTEXT_UNAVAILABLE',
+      })
+    relationshipContext = contextResult.data as unknown as RelationshipContext
+    if (
+      relationshipContext.projects.length !== selectedProjectIds.length ||
+      relationshipContext.projects.some((project) => project.sources.length < 1)
+    )
+      return json(origin, 422, { error: 'RELATIONSHIP_ANALYSIS_EVIDENCE_REQUIRED' })
+    const fingerprint = await sha256(
+      JSON.stringify({ model, schema: 'visual-relations-v1', context: relationshipContext }),
+    )
+    visualAnalysisId = crypto.randomUUID()
+    const beginResult = await client.rpc('begin_visual_relationship_analysis', {
+      p_analysis_id: visualAnalysisId,
+      p_model: model,
+      p_input_fingerprint: fingerprint,
+      p_project_ids: selectedProjectIds,
+      p_force: body.force === true,
+    })
+    if (beginResult.error || !beginResult.data)
+      return json(origin, 409, {
+        error: beginResult.error?.message ?? 'RELATIONSHIP_ANALYSIS_START_FAILED',
+      })
+    const begin = beginResult.data as Record<string, unknown>
+    if (begin.cached === true) {
+      const cachedId = String(begin.analysisId)
+      const countResult = await client
+        .from('visual_insights')
+        .select('id', { count: 'exact', head: true })
+        .eq('analysis_id', cachedId)
+      return json(origin, 200, {
+        ok: true,
+        cached: true,
+        analysisId: cachedId,
+        insightCount: countResult.count ?? 0,
+      })
+    }
+    systemInstruction = [
+      '당신은 여러 프로젝트의 개발 기록을 비교하는 한국어 지식 분석가입니다.',
+      '공통점·차이점·기술 연결·재사용 구조·반복 문제·해결 패턴·개발 패턴·교육 연관성을 구조화하세요.',
+      '제공된 근거에 없는 사실을 만들지 마세요.',
+      '각 인사이트는 서로 다른 프로젝트 2개 이상의 실제 projectId와 각 프로젝트의 sourceId를 포함해야 합니다.',
+      '단순한 주제 유사성보다 재사용하거나 의사결정에 활용할 수 있는 관계를 우선하세요.',
+      '출력은 마크다운 없이 지정된 JSON 객체 하나만 반환하세요.',
+    ].join(' ')
+    prompt = [
+      '프로젝트와 검증 가능한 근거:',
+      JSON.stringify(relationshipContext.projects),
+      '',
+      '출력 형식:',
+      '{"insights":[{"kind":"commonality|difference|technical_link|reusable_component|recurring_problem|solution_pattern|development_pattern|educational_link","dimension":"architecture|technology|ux|operation|education|problem_solving|reuse","title":"짧은 관계명","summary":"근거 기반 핵심 설명","confidence":0.0,"importance":0,"projectIds":["실제 projectId"],"sourceIds":["서로 다른 프로젝트의 실제 sourceId"],"keywords":["핵심어"],"projectNotes":[{"projectId":"실제 projectId","note":"이 프로젝트에 해당하는 짧은 설명"}]}]}',
+    ].join('\n')
+    maxOutputTokens = 2200
+    responseMimeType = 'application/json'
   }
   const estimatedTokens =
     Math.ceil((prompt.length + systemInstruction.length) / 4) + semanticInputTokens
@@ -548,11 +789,24 @@ Deno.serve(async (request) => {
         ? 'chat'
         : body.action === 'briefing'
           ? 'briefing'
-          : 'connectivity_test',
+          : body.action === 'relationship_analysis'
+            ? 'relationship_analysis'
+            : 'connectivity_test',
     p_estimated_input_tokens: estimatedTokens,
   })
-  if (reserveError || !reservation || typeof reservation !== 'object' || Array.isArray(reservation))
+  if (
+    reserveError ||
+    !reservation ||
+    typeof reservation !== 'object' ||
+    Array.isArray(reservation)
+  ) {
+    if (visualAnalysisId)
+      await client.rpc('fail_visual_relationship_analysis', {
+        p_analysis_id: visualAnalysisId,
+        p_error_code: reserveError?.message ?? 'AI_LIMIT_REACHED',
+      })
     return json(origin, 429, { error: reserveError?.message ?? 'AI_LIMIT_REACHED' })
+  }
   const runId = String(reservation.run_id)
   const startedAt = performance.now()
   try {
@@ -624,6 +878,24 @@ Deno.serve(async (request) => {
       if (saved.error || !saved.data) return json(origin, 500, { error: 'AI_BRIEFING_SAVE_FAILED' })
       return json(origin, 200, { ok: true, cached: false, ...saved.data })
     }
+    if (body.action === 'relationship_analysis') {
+      if (!relationshipContext || !visualAnalysisId)
+        throw new Error('RELATIONSHIP_ANALYSIS_STATE_INVALID')
+      const insights = parseRelationshipInsights(result.text, relationshipContext)
+      const saved = await client.rpc('complete_visual_relationship_analysis', {
+        p_analysis_id: visualAnalysisId,
+        p_insights: insights,
+      })
+      if (saved.error || !saved.data) throw new Error('RELATIONSHIP_ANALYSIS_SAVE_FAILED')
+      const savedResult = saved.data as Record<string, unknown>
+      return json(origin, 200, {
+        ok: true,
+        cached: false,
+        analysisId: savedResult.analysisId,
+        insightCount: savedResult.insightCount,
+        model,
+      })
+    }
     return json(origin, 200, {
       ok: true,
       provider: provider.name,
@@ -642,6 +914,11 @@ Deno.serve(async (request) => {
       p_duration_ms: Math.round(performance.now() - startedAt),
       p_error_code: code,
     })
+    if (visualAnalysisId)
+      await client.rpc('fail_visual_relationship_analysis', {
+        p_analysis_id: visualAnalysisId,
+        p_error_code: code,
+      })
     return json(origin, 502, { error: code })
   }
 })

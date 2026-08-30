@@ -1479,6 +1479,40 @@ a {
   color: var(--muted);
   font-size: 0.64rem;
 }
+.constellation-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.7rem 1rem;
+  max-width: 360px;
+}
+.relationship-analysis-button {
+  min-height: 36px;
+  padding: 0.55rem 0.85rem;
+  color: #0c5f5a;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 800;
+  border: 1px solid #bde3df;
+  border-radius: 9px;
+  background: #eef9f7;
+  cursor: pointer;
+}
+.relationship-analysis-button:hover:not(:disabled) {
+  border-color: #77c8c0;
+  background: #e3f5f2;
+}
+.relationship-analysis-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.relationship-analysis-status {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: 0.62rem;
+  text-align: right;
+}
 .constellation-canvas {
   position: relative;
   min-height: 380px;

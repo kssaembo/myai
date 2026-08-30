@@ -92,7 +92,23 @@ export function friendlyDataError(error: unknown) {
     return 'V2 Step 1 SQL Migration을 먼저 Supabase에 적용해 주세요.'
   if (message.includes('AI_DAILY_REQUEST_LIMIT'))
     return '오늘의 AI 요청 한도에 도달했습니다. 내일 다시 사용할 수 있습니다.'
+  if (message.includes('AI_DAILY_RELATIONSHIP_ANALYSIS_LIMIT'))
+    return '관계 분석은 하루 한 번 새로 실행할 수 있습니다. 저장된 분석은 계속 확인할 수 있습니다.'
   if (message.includes('AI_DAILY_TOKEN_LIMIT')) return '오늘의 AI 입력 Token 한도에 도달했습니다.'
+  if (message.includes('RELATIONSHIP_ANALYSIS_EVIDENCE_REQUIRED'))
+    return '프로젝트 2개 이상의 AI 허용 REF 근거가 필요합니다.'
+  if (
+    message.includes('AI_RELATIONSHIP_JSON_INVALID') ||
+    message.includes('VISUAL_INSIGHTS_PAYLOAD_INVALID') ||
+    message.includes('VISUAL_INSIGHT_REFERENCES_INVALID')
+  )
+    return 'AI 분석 결과의 근거 형식이 올바르지 않아 저장하지 않았습니다. 잠시 후 다시 시도해 주세요.'
+  if (
+    message.includes('get_relationship_analysis_context') ||
+    message.includes('begin_visual_relationship_analysis') ||
+    message.includes('complete_visual_relationship_analysis')
+  )
+    return 'Visual Step 2 SQL Migration을 먼저 Supabase에 적용해 주세요.'
   if (message.includes('GEMINI_API_KEY_NOT_CONFIGURED'))
     return 'Supabase Edge Function Secret에 GEMINI_API_KEY를 등록해 주세요.'
   if (
@@ -101,6 +117,8 @@ export function friendlyDataError(error: unknown) {
     message.includes('GEMINI_EMBED_TIMEOUT')
   )
     return 'AI 응답 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.'
+  if (message.includes('AI_RELATIONSHIP_ANALYSIS_TIMEOUT'))
+    return '관계 분석 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.'
   if (message.includes('FunctionsHttpError') || message.includes('AI_CONNECTIVITY_TEST_FAILED'))
     return 'AI 서버 연결에 실패했습니다. Edge Function 배포와 Secret 설정을 확인해 주세요.'
   if (message.includes('DUPLICATE_ACTIVE_RELATION')) return '같은 활성 Relation이 이미 있습니다.'

@@ -14,6 +14,11 @@ import {
 } from '@/entities/ai/api'
 import { getKnowledgeGraph, type GraphPage } from '@/entities/graph/api'
 import { listKnowledge, type KnowledgeRecord } from '@/entities/knowledge-item/api'
+import {
+  getLatestRelationshipAnalysisRun,
+  runRelationshipAnalysis,
+  type VisualAnalysisRunSummary,
+} from '@/entities/visual-analysis/api'
 import { formatDate, friendlyDataError } from '@/shared/lib/display'
 
 import { KnowledgeConstellation } from './KnowledgeConstellation'
@@ -25,6 +30,9 @@ export function DashboardPage() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<AIMessage[]>([])
   const [briefing, setBriefing] = useState<AIBriefing | null>(null)
+  const [relationshipRun, setRelationshipRun] = useState<VisualAnalysisRunSummary | null>(null)
+  const [relationshipNotice, setRelationshipNotice] = useState('')
+  const [isRelationshipAnalyzing, setIsRelationshipAnalyzing] = useState(false)
   const [isBriefing, setIsBriefing] = useState(false)
   const [question, setQuestion] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -34,16 +42,19 @@ export function DashboardPage() {
 
   const loadWorkspace = useCallback(async () => {
     try {
-      const [knowledge, chatList, knowledgeGraph, todayBriefing] = await Promise.all([
-        listKnowledge(),
-        listAIConversations(),
-        getKnowledgeGraph(null).catch(() => null),
-        getTodayBriefing().catch(() => null),
-      ])
+      const [knowledge, chatList, knowledgeGraph, todayBriefing, latestRelationshipRun] =
+        await Promise.all([
+          listKnowledge(),
+          listAIConversations(),
+          getKnowledgeGraph(null).catch(() => null),
+          getTodayBriefing().catch(() => null),
+          getLatestRelationshipAnalysisRun().catch(() => null),
+        ])
       setRecords(knowledge)
       setConversations(chatList)
       setGraph(knowledgeGraph)
       setBriefing(todayBriefing)
+      setRelationshipRun(latestRelationshipRun)
     } catch (caught) {
       setError(friendlyDataError(caught))
     }
@@ -150,6 +161,33 @@ export function DashboardPage() {
   }
 
   const projects = records.filter((item) => item.nodeType.key === 'project').slice(0, 4)
+
+  const analyzeRelationships = async () => {
+    if (isRelationshipAnalyzing) return
+    if (projects.length < 2) {
+      setError('관계 분석에는 AI 허용 REF 근거가 있는 프로젝트가 2개 이상 필요합니다.')
+      return
+    }
+    setError('')
+    setRelationshipNotice('')
+    setIsRelationshipAnalyzing(true)
+    try {
+      const result = await runRelationshipAnalysis(
+        projects.map((project) => project.id),
+        false,
+      )
+      setRelationshipNotice(
+        result.cached
+          ? `같은 자료로 저장된 관계 인사이트 ${result.insightCount}개를 불러왔습니다.`
+          : `프로젝트 관계 인사이트 ${result.insightCount}개를 분석해 저장했습니다.`,
+      )
+      setRelationshipRun(await getLatestRelationshipAnalysisRun())
+    } catch (caught) {
+      setError(friendlyDataError(caught))
+    } finally {
+      setIsRelationshipAnalyzing(false)
+    }
+  }
   const thoughtRecords = records
     .filter((item) => ['idea', 'question', 'problem', 'lesson'].includes(item.nodeType.key))
     .slice(0, 3)
@@ -396,9 +434,27 @@ export function DashboardPage() {
               질문을 입력하거나 답변을 받으면 관련 지식과 실제 Relation이 활성화됩니다.
             </p>
           </div>
-          <Link className="text-action" to="/knowledge">
-            지식 관리
-          </Link>
+          <div className="constellation-header-actions">
+            <button
+              className="relationship-analysis-button"
+              type="button"
+              disabled={isRelationshipAnalyzing || projects.length < 2}
+              onClick={() => void analyzeRelationships()}
+            >
+              {isRelationshipAnalyzing ? '관계 분석 중…' : '관계 분석'}
+            </button>
+            <Link className="text-action" to="/knowledge">
+              지식 관리
+            </Link>
+            {(relationshipNotice || relationshipRun?.status === 'completed') && (
+              <small className="relationship-analysis-status" aria-live="polite">
+                {relationshipNotice ||
+                  (relationshipRun
+                    ? `최근 관계 분석 · ${formatDate(relationshipRun.completed_at ?? relationshipRun.created_at)}`
+                    : '')}
+              </small>
+            )}
+          </div>
         </header>
         <KnowledgeConstellation
           records={records}

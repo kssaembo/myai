@@ -920,6 +920,32 @@ export type Database = {
         }
         Returns: Json
       }
+      get_relationship_analysis_context: {
+        Args: { p_project_ids: string[]; p_evidence_per_project?: number }
+        Returns: Json
+      }
+      begin_visual_relationship_analysis: {
+        Args: {
+          p_analysis_id: string
+          p_model: string
+          p_input_fingerprint: string
+          p_project_ids: string[]
+          p_force?: boolean
+        }
+        Returns: Json
+      }
+      complete_visual_relationship_analysis: {
+        Args: { p_analysis_id: string; p_insights: Json }
+        Returns: Json
+      }
+      fail_visual_relationship_analysis: {
+        Args: { p_analysis_id: string; p_error_code: string }
+        Returns: undefined
+      }
+      review_visual_insight: {
+        Args: { p_insight_id: string; p_status: VisualInsightStatus }
+        Returns: undefined
+      }
       export_knowledge_item: { Args: { p_item_id: string }; Returns: Json }
       trash_knowledge_item: { Args: { p_item_id: string }; Returns: undefined }
       restore_knowledge_item: { Args: { p_item_id: string }; Returns: undefined }
