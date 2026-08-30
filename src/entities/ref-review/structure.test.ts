@@ -149,4 +149,17 @@ describe('REF rule structuring', () => {
     expect(antiPatterns).toContain('무작위 정렬 사용')
     expect(antiPatterns.every((title) => !title.includes('**') && !title.includes('`'))).toBe(true)
   })
+
+  it('uses the pattern content when a child heading contains only a number', () => {
+    const numberedPatternSections = sections.map((item) =>
+      item.heading === 'Teacher Host Pattern'
+        ? { ...item, heading: '1.', heading_path: ['13. REUSABLE PATTERNS', '1.'] }
+        : item,
+    )
+    const result = structureRefDocument('REF_SECRET.md', 'REF Secret', numberedPatternSections)
+    const pattern = result.nodes.find((node) => node.nodeTypeKey === 'pattern')
+
+    expect(pattern?.title).toBe('목적: 교사가 기준 상태 관리')
+    expect(pattern?.title).not.toBe('1.')
+  })
 })

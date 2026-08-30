@@ -94,6 +94,23 @@
   gap: 16px;
   margin-bottom: 16px;
 }
+.ai-billing-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.9rem;
+  margin-top: 0.8rem;
+}
+.ai-billing-links a {
+  color: var(--teal-dark);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+.ai-billing-note {
+  display: block;
+  margin-top: 0.55rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
 
 .ai-provider-card,
 .ai-usage-card,
@@ -1624,6 +1641,87 @@ a {
   line-height: 1.4;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+.project-cluster-map {
+  min-height: 500px;
+  background:
+    linear-gradient(rgb(16 47 73 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(16 47 73 / 3%) 1px, transparent 1px), #fbfdfd;
+  background-size: 32px 32px;
+}
+.project-map-guide {
+  position: absolute;
+  top: 1rem;
+  left: 1.1rem;
+  z-index: 4;
+  display: grid;
+  gap: 0.2rem;
+}
+.project-map-guide strong {
+  color: var(--navy);
+  font-size: 0.76rem;
+}
+.project-map-guide span {
+  color: var(--muted);
+  font-size: 0.62rem;
+}
+.project-cluster-root,
+.project-cluster-child {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  align-content: center;
+  gap: 0.28rem;
+  width: 150px;
+  min-height: 76px;
+  padding: 0.7rem 0.8rem;
+  transform: translate(-50%, -50%);
+  border: 1px solid color-mix(in srgb, var(--node-color) 45%, var(--line));
+  border-radius: 14px;
+  background: #fff;
+  text-align: center;
+  box-shadow: 0 10px 26px rgb(24 52 70 / 9%);
+}
+.project-cluster-root {
+  min-height: 88px;
+  border-width: 2px;
+  background: color-mix(in srgb, var(--node-color) 8%, #fff);
+}
+.project-cluster-child {
+  width: 126px;
+  min-height: 64px;
+}
+.project-cluster-root:hover,
+.project-cluster-child:hover,
+.project-cluster-root.is-active,
+.project-cluster-child.is-active {
+  border-color: var(--node-color);
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--node-color) 16%, transparent);
+}
+.project-cluster-root span,
+.project-cluster-child span {
+  color: var(--node-color);
+  font-size: 0.52rem;
+  font-weight: 850;
+}
+.project-cluster-root strong,
+.project-cluster-child strong {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--navy);
+  font-size: 0.68rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.project-child-link {
+  stroke: rgb(25 183 167 / 42%);
+  stroke-width: 1.5;
+}
+.project-cross-link {
+  stroke: rgb(121 87 189 / 48%);
+  stroke-width: 2;
+  stroke-dasharray: 7 5;
 }
 .relationship-map-shell {
   background: #fbfdfd;
@@ -4338,6 +4436,13 @@ a {
   }
   .relationship-map-shell {
     overflow-x: auto;
+  }
+  .knowledge-landscape:has(.project-cluster-map) {
+    overflow-x: auto;
+  }
+  .project-cluster-map {
+    width: 900px;
+    min-height: 500px;
   }
   .relationship-map-canvas {
     width: 760px;

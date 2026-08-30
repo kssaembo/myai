@@ -157,6 +157,17 @@ export function AISettingsPage() {
             이 한도는 예상치 못한 과다 호출을 막는 앱 내부 제한입니다. Google의 실제 무료 Quota가
             우선하며, 무료 티어 콘텐츠는 제품 개선에 사용될 수 있습니다.
           </p>
+          <div className="ai-billing-links">
+            <a href="https://aistudio.google.com/usage" target="_blank" rel="noreferrer">
+              Google 실제 사용량 확인
+            </a>
+            <a href="https://console.cloud.google.com/billing" target="_blank" rel="noreferrer">
+              결제 계정·비용 확인
+            </a>
+          </div>
+          <small className="ai-billing-note">
+            결제 계정 연결 여부와 실제 청구 금액은 보안상 이 앱에서 조회할 수 없습니다.
+          </small>
         </article>
         <article className="content-card ai-embedding-card">
           <p className="eyebrow">Knowledge RAG</p>

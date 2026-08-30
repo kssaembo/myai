@@ -15,6 +15,11 @@ import {
 import { getKnowledgeGraph, type GraphPage } from '@/entities/graph/api'
 import { listKnowledge, type KnowledgeRecord } from '@/entities/knowledge-item/api'
 import {
+  allowAllRefDocumentsForAI,
+  getRefAIReadiness,
+  type RefAIReadiness,
+} from '@/entities/ref-review/readiness'
+import {
   getLatestRelationshipAnalysisRun,
   getVisualRelationshipFoundation,
   runRelationshipAnalysis,
@@ -37,6 +42,8 @@ export function DashboardPage() {
     null,
   )
   const [relationshipNotice, setRelationshipNotice] = useState('')
+  const [refReadiness, setRefReadiness] = useState<RefAIReadiness | null>(null)
+  const [isAllowingRefs, setIsAllowingRefs] = useState(false)
   const [isRelationshipAnalyzing, setIsRelationshipAnalyzing] = useState(false)
   const [isBriefing, setIsBriefing] = useState(false)
   const [question, setQuestion] = useState('')
@@ -54,6 +61,7 @@ export function DashboardPage() {
         todayBriefing,
         latestRelationshipRun,
         relationshipFoundation,
+        readiness,
       ] = await Promise.all([
         listKnowledge(),
         listAIConversations(),
@@ -61,6 +69,7 @@ export function DashboardPage() {
         getTodayBriefing().catch(() => null),
         getLatestRelationshipAnalysisRun().catch(() => null),
         getVisualRelationshipFoundation(null, null, 24).catch(() => null),
+        getRefAIReadiness().catch(() => null),
       ])
       setRecords(knowledge)
       setConversations(chatList)
@@ -68,6 +77,7 @@ export function DashboardPage() {
       setBriefing(todayBriefing)
       setRelationshipRun(latestRelationshipRun)
       setVisualFoundation(relationshipFoundation)
+      setRefReadiness(readiness)
     } catch (caught) {
       setError(friendlyDataError(caught))
     }
@@ -173,7 +183,28 @@ export function DashboardPage() {
     }
   }
 
-  const projects = records.filter((item) => item.nodeType.key === 'project').slice(0, 4)
+  const allProjects = records.filter((item) => item.nodeType.key === 'project')
+  const eligibleProjectIds = new Set(
+    refReadiness?.projects
+      .filter((project) => project.eligible)
+      .map((project) => project.projectId) ?? [],
+  )
+  const projects = allProjects.filter((project) => eligibleProjectIds.has(project.id)).slice(0, 4)
+
+  const allowRefAI = async () => {
+    if (isAllowingRefs) return
+    setError('')
+    setIsAllowingRefs(true)
+    try {
+      await allowAllRefDocumentsForAI()
+      await loadWorkspace()
+      setRelationshipNotice('REF 문서를 AI 관계 분석에 사용할 수 있도록 허용했습니다.')
+    } catch (caught) {
+      setError(friendlyDataError(caught))
+    } finally {
+      setIsAllowingRefs(false)
+    }
+  }
 
   const analyzeRelationships = async () => {
     if (isRelationshipAnalyzing) return
@@ -214,7 +245,7 @@ export function DashboardPage() {
   const trimmedQuestion = question.trim()
   const focusText = trimmedQuestion ? trimmedQuestion : (latestUserQuestion ?? '')
   const fallbackQuestions = [
-    projects[0] ? `${projects[0].title}에서 지금 가장 먼저 해결할 문제는 무엇일까?` : null,
+    allProjects[0] ? `${allProjects[0].title}에서 지금 가장 먼저 해결할 문제는 무엇일까?` : null,
     thoughtRecords[0] ? `${thoughtRecords[0].title}을 더 구체적인 실행안으로 발전시켜줘.` : null,
     records.length ? '내 기록에서 반복되는 설계 원칙 세 가지를 찾아줘.' : null,
   ].filter((value): value is string => Boolean(value))
@@ -447,7 +478,7 @@ export function DashboardPage() {
             <p className="constellation-description">
               {visualFoundation?.insights.length
                 ? 'AI가 발견한 프로젝트 관계를 선택하면 핵심 요약과 근거를 확인할 수 있습니다.'
-                : '질문을 입력하거나 답변을 받으면 관련 지식과 실제 Relation이 활성화됩니다.'}
+                : '각 프로젝트를 중심으로 REF 원문과 기술·문제·패턴을 묶어 보여줍니다.'}
             </p>
           </div>
           <div className="constellation-header-actions">
@@ -459,9 +490,25 @@ export function DashboardPage() {
             >
               {isRelationshipAnalyzing ? '관계 분석 중…' : '관계 분석'}
             </button>
+            {refReadiness && refReadiness.allowedRefDocuments < refReadiness.totalRefDocuments && (
+              <button
+                className="text-action"
+                type="button"
+                disabled={isAllowingRefs || !refReadiness.totalRefDocuments}
+                onClick={() => void allowRefAI()}
+              >
+                {isAllowingRefs ? '허용 중…' : 'REF AI 사용 허용'}
+              </button>
+            )}
             <Link className="text-action" to="/knowledge">
               지식 관리
             </Link>
+            {refReadiness && (
+              <small className="relationship-analysis-status">
+                분석 가능 프로젝트 {projects.length}/{allProjects.length} · AI 허용 REF{' '}
+                {refReadiness.allowedRefDocuments}/{refReadiness.totalRefDocuments}
+              </small>
+            )}
             {(relationshipNotice || relationshipRun?.status === 'completed') && (
               <small className="relationship-analysis-status" aria-live="polite">
                 {relationshipNotice ||

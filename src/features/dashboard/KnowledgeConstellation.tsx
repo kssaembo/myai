@@ -78,6 +78,95 @@ const dimensionLabels: Record<string, string> = {
   reuse: '재사용',
 }
 
+function ProjectClusterMap({
+  graph,
+  activeSourceIds,
+}: Pick<KnowledgeConstellationProps, 'graph' | 'activeSourceIds'>) {
+  const nodes = graph?.nodes ?? []
+  const edges = graph?.edges ?? []
+  const projectNodes = nodes.filter((node) => node.node_type_key === 'project').slice(0, 3)
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]))
+  const projectIds = new Set(projectNodes.map((project) => project.id))
+  const positions = new Map<string, MapPosition>()
+  const visibleNodes = [...projectNodes]
+
+  projectNodes.forEach((project, projectIndex) => {
+    const projectX = [170, 500, 830][projectIndex]
+    positions.set(project.id, { x: projectX, y: 145 })
+    const childIds = edges
+      .flatMap((edge) => {
+        if (edge.source_item_id === project.id) return [edge.target_item_id]
+        if (edge.target_item_id === project.id) return [edge.source_item_id]
+        return []
+      })
+      .filter((id) => !projectIds.has(id))
+    const children = [...new Set(childIds)]
+      .map((id) => nodeMap.get(id))
+      .filter((node): node is NonNullable<typeof node> => Boolean(node))
+      .sort((left, right) => {
+        if (left.node_type_key === 'document') return -1
+        if (right.node_type_key === 'document') return 1
+        return right.evidence_count - left.evidence_count
+      })
+      .slice(0, 3)
+    children.forEach((child, childIndex) => {
+      positions.set(child.id, { x: projectX + [-92, 0, 92][childIndex], y: 350 })
+      if (!visibleNodes.some((node) => node.id === child.id)) visibleNodes.push(child)
+    })
+  })
+
+  const visibleIds = new Set(visibleNodes.map((node) => node.id))
+  const visibleEdges = edges.filter(
+    (edge) => visibleIds.has(edge.source_item_id) && visibleIds.has(edge.target_item_id),
+  )
+
+  return (
+    <div className="constellation-canvas project-cluster-map" aria-label="프로젝트 중심 지식 지도">
+      <div className="project-map-guide">
+        <strong>프로젝트 중심 지도</strong>
+        <span>프로젝트를 선택하면 연결된 원문과 핵심 지식을 확인할 수 있습니다.</span>
+      </div>
+      <svg viewBox="0 0 1000 500" preserveAspectRatio="none" aria-hidden="true">
+        {visibleEdges.map((edge) => {
+          const source = positions.get(edge.source_item_id)
+          const target = positions.get(edge.target_item_id)
+          if (!source || !target) return null
+          return (
+            <line
+              className={
+                projectIds.has(edge.source_item_id) && projectIds.has(edge.target_item_id)
+                  ? 'project-cross-link'
+                  : 'project-child-link'
+              }
+              key={edge.id}
+              x1={source.x}
+              y1={source.y}
+              x2={target.x}
+              y2={target.y}
+            />
+          )
+        })}
+      </svg>
+      {visibleNodes.map((node) => {
+        const position = positions.get(node.id)
+        if (!position) return null
+        const isProject = projectIds.has(node.id)
+        return (
+          <Link
+            className={`${isProject ? 'project-cluster-root' : 'project-cluster-child'}${activeSourceIds.has(node.id) ? ' is-active' : ''}`}
+            style={visualStyle(position, node.color, 5)}
+            to={`/knowledge/${node.id}`}
+            key={node.id}
+          >
+            <span>{isProject ? '프로젝트' : node.node_type_label}</span>
+            <strong>{node.title}</strong>
+          </Link>
+        )
+      })}
+    </div>
+  )
+}
+
 function keywords(value: string) {
   return [...new Set(value.toLocaleLowerCase().match(/[가-힣a-z0-9_-]{2,}/g) ?? [])].slice(0, 8)
 }
@@ -363,5 +452,7 @@ export function KnowledgeConstellation(props: KnowledgeConstellationProps) {
         activeSourceIds={props.activeSourceIds}
       />
     )
+  if (props.graph?.nodes.some((node) => node.node_type_key === 'project'))
+    return <ProjectClusterMap graph={props.graph} activeSourceIds={props.activeSourceIds} />
   return <ContextConstellation {...props} />
 }

@@ -183,9 +183,10 @@ export function structureRefDocument(
     }
 
     for (const section of childSections(grouped.get('reusable_patterns') ?? [])) {
+      const headingTitle = cleanNumberedHeading(section.heading ?? '')
       const node = proposal(
         'pattern',
-        cleanNumberedHeading(section.heading ?? '재사용 패턴'),
+        meaningfulHeading(headingTitle) ? headingTitle : firstUsefulLine(section.content),
         firstUsefulLine(section.content),
         section,
       )
@@ -200,7 +201,9 @@ export function structureRefDocument(
     }
 
     for (const item of extractBullets(grouped.get('classroom_lessons') ?? [])) {
-      nodes.push(proposal('lesson', item.title, item.summary, item.section))
+      const node = proposal('lesson', item.title, item.summary, item.section)
+      nodes.push(node)
+      relations.push(relation(projectId, node.localId, 'SUPPORTS', item.section, 'proposed'))
     }
   }
 
@@ -352,7 +355,13 @@ function extractBullets(sections: DocumentSection[]) {
 }
 
 function cleanNumberedHeading(value: string) {
-  return value.replace(/^(?:problem|change)\s*\d+\s*[—–:-]?\s*/i, '').trim()
+  return value
+    .replace(/^(?:(?:problem|change|pattern|패턴)\s*)?\d+(?:\.\d+)*[.)]?\s*[—–:-]?\s*/i, '')
+    .trim()
+}
+
+function meaningfulHeading(value: string) {
+  return value.length >= 2 && /[\p{L}\p{N}]/u.test(value)
 }
 
 function cleanInlineMarkup(value: string) {
