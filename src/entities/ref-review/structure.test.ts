@@ -128,4 +128,25 @@ describe('REF rule structuring', () => {
     const technologies = result.nodes.filter((node) => node.nodeTypeKey === 'technology')
     expect(technologies.map((node) => node.title)).toEqual(['React 19'])
   })
+
+  it('turns raw Markdown and code expressions into short plain-language labels', () => {
+    const difficultSections = [
+      ...sections,
+      section(
+        11,
+        '15. DO NOT REPEAT',
+        2,
+        ['15. DO NOT REPEAT'],
+        '- **`localStorage.clear()`로 전체 origin 데이터를 지우지 않는다.** 다른 앱 데이터도 사라진다.\n- **`sort(() => Math.random() - 0.5)`를 사용하지 않는다.** 결과가 편향될 수 있다.',
+      ),
+    ]
+    const result = structureRefDocument('REF_SECRET.md', 'REF Secret', difficultSections)
+    const antiPatterns = result.nodes
+      .filter((node) => node.nodeTypeKey === 'anti_pattern')
+      .map((node) => node.title)
+
+    expect(antiPatterns).toContain('전체 브라우저 저장소 삭제')
+    expect(antiPatterns).toContain('무작위 정렬 사용')
+    expect(antiPatterns.every((title) => !title.includes('**') && !title.includes('`'))).toBe(true)
+  })
 })

@@ -77,7 +77,7 @@ export async function cancelImportJob(jobId: string) {
 
 export async function setImportJobStatus(
   jobId: string,
-  status: 'validating' | 'uploading' | 'parsing',
+  status: 'validating' | 'uploading' | 'parsing' | 'structuring',
 ) {
   const { error } = await supabase
     .from('import_jobs')

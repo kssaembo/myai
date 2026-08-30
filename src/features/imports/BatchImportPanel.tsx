@@ -16,6 +16,11 @@ import {
   type ImportJobRecord,
 } from '@/entities/import-job/api'
 import { processImportCandidates, type ImportProgress } from '@/entities/import-job/processor'
+import {
+  autoStructureExistingRef,
+  listRefAutomationCandidates,
+  type RefAutomationCandidate,
+} from '@/entities/ref-review/api'
 import { useAuth } from '@/features/auth/auth-context'
 import { formatDate, friendlyDataError } from '@/shared/lib/display'
 import type {
@@ -59,6 +64,14 @@ export function BatchImportPanel() {
   const [isPreparing, setIsPreparing] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState('')
+  const [refCandidates, setRefCandidates] = useState<RefAutomationCandidate[]>([])
+  const [isStructuringRefs, setIsStructuringRefs] = useState(false)
+  const [refProgress, setRefProgress] = useState<{
+    completed: number
+    total: number
+    title: string
+  } | null>(null)
+  const [refResult, setRefResult] = useState('')
   const cancelRef = useRef(false)
 
   const loadJobs = useCallback(async () => {
@@ -69,10 +82,21 @@ export function BatchImportPanel() {
     }
   }, [])
 
+  const loadRefCandidates = useCallback(async () => {
+    try {
+      setRefCandidates(await listRefAutomationCandidates())
+    } catch (caught) {
+      setError(friendlyDataError(caught))
+    }
+  }, [])
+
   useEffect(() => {
-    const timeout = window.setTimeout(() => void loadJobs(), 0)
+    const timeout = window.setTimeout(() => {
+      void loadJobs()
+      void loadRefCandidates()
+    }, 0)
     return () => window.clearTimeout(timeout)
-  }, [loadJobs])
+  }, [loadJobs, loadRefCandidates])
 
   useEffect(
     () => () => {
@@ -165,6 +189,46 @@ export function BatchImportPanel() {
     }
   }
 
+  const restructureExistingRefs = async () => {
+    if (!refCandidates.length) return
+    setError('')
+    setRefResult('')
+    setIsStructuringRefs(true)
+    let structured = 0
+    let review = 0
+    let failed = 0
+    let firstFailure: unknown = null
+    try {
+      for (const [index, candidate] of refCandidates.entries()) {
+        setRefProgress({
+          completed: index,
+          total: refCandidates.length,
+          title: candidate.title,
+        })
+        try {
+          const result = await autoStructureExistingRef(candidate)
+          if (result.status === 'structured') structured += 1
+          else review += 1
+        } catch (caught) {
+          failed += 1
+          firstFailure ??= caught
+        }
+      }
+      setRefProgress({
+        completed: refCandidates.length,
+        total: refCandidates.length,
+        title: '완료',
+      })
+      setRefResult(
+        `자동 정리 ${structured}개 · 확인 필요 ${review}개${failed ? ` · 실패 ${failed}개` : ''}`,
+      )
+      if (firstFailure) setError(friendlyDataError(firstFailure))
+      await loadRefCandidates()
+    } finally {
+      setIsStructuringRefs(false)
+    }
+  }
+
   const currentJob = jobs.find((job) => job.id === currentJobId)
   const canRetry =
     !isProcessing &&
@@ -184,6 +248,33 @@ export function BatchImportPanel() {
           최대 {MAX_IMPORT_ENTRIES}개 · ZIP {MAX_ARCHIVE_BYTES / 1024 / 1024}MiB
         </span>
       </header>
+
+      <article className="content-card ref-auto-card">
+        <div>
+          <p className="eyebrow">REF 자동 정리</p>
+          <h2>기존 REF도 쉬운 지식으로 연결</h2>
+          <p>
+            문서 {refCandidates.length}개를 다시 업로드하지 않고 정리합니다. 코드·Markdown 제목은
+            짧은 개념명으로 바꾸고 기존 근거와 관계는 유지합니다.
+          </p>
+          {refResult && <strong className="ref-auto-result">{refResult}</strong>}
+        </div>
+        <div className="ref-auto-actions">
+          {refProgress && (
+            <span>
+              {refProgress.title} · {refProgress.completed}/{refProgress.total}
+            </span>
+          )}
+          <button
+            className="secondary-button"
+            type="button"
+            disabled={isStructuringRefs || !refCandidates.length}
+            onClick={() => void restructureExistingRefs()}
+          >
+            {isStructuringRefs ? 'REF 정리 중…' : '기존 REF 전체 정리'}
+          </button>
+        </div>
+      </article>
 
       <div className="batch-source-tabs content-card">
         <button
@@ -220,7 +311,7 @@ export function BatchImportPanel() {
             />
             REF ZIP
           </label>
-          <p>REF 판별과 내부 구조화는 Step 8에서 진행하며, 지금은 가져오기 유형만 기록합니다.</p>
+          <p>REF ZIP은 본문을 추출한 뒤 확실한 항목을 자동으로 쉬운 지식 구조에 연결합니다.</p>
         </div>
       )}
 

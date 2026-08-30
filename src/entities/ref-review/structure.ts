@@ -252,8 +252,8 @@ function proposal(
   return {
     localId: crypto.randomUUID(),
     nodeTypeKey,
-    title: title.slice(0, 180),
-    summary: summary.slice(0, 1000),
+    title: humanReadableTitle(title, nodeTypeKey),
+    summary: humanReadableSummary(summary),
     sectionId: section.id,
     evidenceText: clippedEvidence(section.content),
     evidenceRole: nodeTypeKey === 'solution' ? 'support' : 'definition',
@@ -311,10 +311,18 @@ function extractTechnologies(sections: DocumentSection[]) {
       const status = cells.at(-1) ?? ''
       if (/not used|removed|미사용|제거/i.test(status)) return []
       if (!/code-confirmed|confirmed|implemented|사용|구현/i.test(status)) return []
+      const firstCell = cleanInlineMarkup(cells[0])
+      const categoryFirst =
+        cells.length >= 4 &&
+        /framework|language|runtime|database|storage|styling|build|test|deploy|hosting|통신|상태|프레임워크|언어|배포|저장/i.test(
+          firstCell,
+        )
+      const title = categoryFirst ? cleanInlineMarkup(cells[1]) : firstCell
+      const summaryStart = categoryFirst ? 2 : 1
       return [
         {
-          title: cells[0].replaceAll('`', ''),
-          summary: cells.slice(1, -1).join(' · ').replaceAll('`', ''),
+          title,
+          summary: cells.slice(summaryStart, -1).join(' · ').replaceAll('`', ''),
           section,
         },
       ]
@@ -345,6 +353,50 @@ function extractBullets(sections: DocumentSection[]) {
 
 function cleanNumberedHeading(value: string) {
   return value.replace(/^(?:problem|change)\s*\d+\s*[—–:-]?\s*/i, '').trim()
+}
+
+function cleanInlineMarkup(value: string) {
+  return value
+    .replace(/`{1,3}/g, '')
+    .replace(/\*\*|__|~~/g, '')
+    .replace(/^#+\s*/, '')
+    .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function humanReadableTitle(value: string, nodeTypeKey: RefNodeProposal['nodeTypeKey']) {
+  const clean = cleanInlineMarkup(value)
+    .replace(/^[-*•]\s*/, '')
+    .replace(/^(?:위험|금지|주의|문제|교훈)\s*[:：-]?\s*/i, '')
+  const rules: [RegExp, string][] = [
+    [/localStorage\.clear|전체.*(?:스토리지|저장소).*삭제/i, '전체 브라우저 저장소 삭제'],
+    [/sort\s*\(.*Math\.random|Math\.random.*sort/i, '무작위 정렬 사용'],
+    [
+      /(?:(?:Client|클라이언트).*(?:Host|호스트)|(?:Host|호스트).*(?:Client|클라이언트)).*(?:직접|접근|조회|접속)/i,
+      '클라이언트의 Host 상태 직접 접근',
+    ],
+    [/(?:4천|수천|거대한|대형|단일).*(?:APP|App|컴포넌트|HTML)/i, '거대 단일 컴포넌트'],
+    [/Frontend\s*Framework/i, '프런트엔드 프레임워크'],
+    [/Teacher\s*Host\s*Pattern/i, '교사 중심 상태 관리 패턴'],
+    [/@ts-nocheck/i, '타입 검사 비활성화'],
+    [/file:\/\//i, '로컬 파일 방식의 다중 기기 테스트'],
+    [/alert\/?confirm|alert|confirm/i, '브라우저 기본 팝업 의존'],
+  ]
+  const matched = rules.find(([pattern]) => pattern.test(clean))?.[1]
+  if (matched) return matched
+  const firstClause = clean.split(/(?<=[.!?。])\s+|[;；]|\s+[—–]\s+/)[0].trim()
+  const withoutDirective =
+    nodeTypeKey === 'anti_pattern'
+      ? firstClause.replace(/(?:하지|쓰지|두지|남기지|사용하지|가정하지)\s*않는다[.]?$/i, '').trim()
+      : firstClause
+  const fallback = withoutDirective || clean || '핵심 항목'
+  return fallback.length > 42 ? `${fallback.slice(0, 39)}…` : fallback
+}
+
+function humanReadableSummary(value: string) {
+  const clean = cleanInlineMarkup(value).replace(/^[:：-]\s*/, '')
+  return clean.length > 360 ? `${clean.slice(0, 357)}…` : clean
 }
 
 function firstUsefulLine(content: string) {

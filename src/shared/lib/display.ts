@@ -64,6 +64,8 @@ export function friendlyDataError(error: unknown) {
     return 'Step 7 SQL Migration을 먼저 Supabase에 적용해 주세요.'
   if (message.includes('mark_ref_profile') || message.includes('commit_ref_review'))
     return 'Step 8 SQL Migration을 먼저 Supabase에 적용해 주세요.'
+  if (message.includes('prepare_ref_auto_structure'))
+    return 'REF 자동 구조화 SQL Migration을 먼저 Supabase에 적용해 주세요.'
   if (message.includes('search_knowledge'))
     return 'Step 9 SQL Migration을 먼저 Supabase에 적용해 주세요.'
   if (message.includes('get_project_aggregate'))

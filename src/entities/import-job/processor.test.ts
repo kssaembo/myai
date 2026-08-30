@@ -4,6 +4,7 @@ import type { ImportCandidate } from './archive'
 import { processImportCandidates } from './processor'
 
 const harness = vi.hoisted(() => ({
+  autoStructureRefDocument: vi.fn(),
   commitDocumentParse: vi.fn(),
   createUploadedDocument: vi.fn(),
   findDuplicateDocument: vi.fn(),
@@ -11,6 +12,10 @@ const harness = vi.hoisted(() => ({
   runDocumentParser: vi.fn(),
   setImportJobStatus: vi.fn(),
   updateImportEntry: vi.fn(),
+}))
+
+vi.mock('@/entities/ref-review/api', () => ({
+  autoStructureRefDocument: harness.autoStructureRefDocument,
 }))
 
 vi.mock('@/entities/document/api', () => ({
@@ -48,6 +53,7 @@ describe('batch import failure isolation', () => {
       warnings: [],
     })
     harness.commitDocumentParse.mockResolvedValue(1)
+    harness.autoStructureRefDocument.mockResolvedValue({ status: 'structured' })
     harness.refreshImportJob.mockResolvedValue('completed')
     harness.setImportJobStatus.mockResolvedValue(undefined)
     harness.updateImportEntry.mockResolvedValue(undefined)
@@ -91,6 +97,12 @@ describe('batch import failure isolation', () => {
     expect(harness.updateImportEntry).toHaveBeenCalledWith(
       'entry-2',
       expect.objectContaining({ status: 'parsed', documentId: 'document-2' }),
+    )
+    expect(harness.autoStructureRefDocument).toHaveBeenCalledWith(
+      'document-2',
+      'version-2',
+      'REF_VALID.md',
+      'REF_VALID',
     )
   })
 })

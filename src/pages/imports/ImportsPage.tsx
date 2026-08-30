@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import {
+  commitDocumentParse,
   createUploadedDocument,
   findDuplicateDocument,
   type DuplicateDocument,
@@ -12,6 +13,8 @@ import {
   validateDocumentFile,
   type ValidatedDocumentFile,
 } from '@/entities/document/file-validation'
+import { runDocumentParser } from '@/entities/document/parser/run-parser'
+import { autoStructureRefDocument } from '@/entities/ref-review/api'
 import { readTaxonomy, type Category, type Tag } from '@/entities/taxonomy/api'
 import { useAuth } from '@/features/auth/auth-context'
 import { BatchImportPanel } from '@/features/imports/BatchImportPanel'
@@ -28,7 +31,8 @@ const documentKinds: [DocumentKind, string][] = [
   ['other', '기타'],
 ]
 
-type UploadPhase = 'idle' | 'validating' | 'ready' | 'uploading' | 'saving' | 'complete'
+type UploadPhase =
+  'idle' | 'validating' | 'ready' | 'uploading' | 'saving' | 'parsing' | 'structuring' | 'complete'
 
 export function ImportsPage() {
   const [mode, setMode] = useState<'single' | 'batch'>('batch')
@@ -113,7 +117,7 @@ function SingleFileImport() {
     setError('')
     setPhase('uploading')
     try {
-      const { itemId } = await createUploadedDocument({
+      const { itemId, versionId } = await createUploadedDocument({
         ownerId: user.id,
         title: form.title,
         summary: form.summary,
@@ -123,8 +127,24 @@ function SingleFileImport() {
         validated,
         onStorageUploaded: () => setPhase('saving'),
       })
+      setPhase('parsing')
+      const parsed = await runDocumentParser(validated.format, await validated.file.arrayBuffer())
+      await commitDocumentParse(versionId, parsed)
+      let destination = `/knowledge/${itemId}`
+      if (form.documentKind === 'ref') {
+        setPhase('structuring')
+        const structured = await autoStructureRefDocument(
+          itemId,
+          versionId,
+          validated.file.name,
+          form.title,
+        )
+        if (structured.status === 'needs_review') {
+          destination = `/knowledge/${itemId}/ref-review`
+        }
+      }
       setPhase('complete')
-      window.setTimeout(() => void navigate(`/knowledge/${itemId}`), 500)
+      window.setTimeout(() => void navigate(destination), 500)
     } catch (caught) {
       setPhase('ready')
       setError(friendlyDataError(caught))
@@ -147,8 +167,8 @@ function SingleFileImport() {
           <p className="eyebrow">Imports · Single File</p>
           <h1>원본 파일 가져오기</h1>
           <p>
-            원본은 Private Storage에 불변 Version으로 보존됩니다. 이번 단계에서는 파일 하나씩
-            업로드합니다.
+            원본은 Private Storage에 보존하고, REF 문서는 업로드 뒤 자동으로 쉬운 지식 구조로
+            연결합니다.
           </p>
         </div>
         <span className="limit-badge">최대 {MAX_DOCUMENT_BYTES / 1024 / 1024}MiB</span>
@@ -158,10 +178,20 @@ function SingleFileImport() {
         {[
           ['validating', '1', '검증'],
           ['uploading', '2', '업로드'],
-          ['saving', '3', '기록'],
-          ['complete', '4', '완료'],
+          ['parsing', '3', '본문 분석'],
+          ['structuring', '4', '지식 연결'],
+          ['complete', '5', '완료'],
         ].map(([value, number, label]) => {
-          const order = ['idle', 'validating', 'ready', 'uploading', 'saving', 'complete']
+          const order = [
+            'idle',
+            'validating',
+            'ready',
+            'uploading',
+            'saving',
+            'parsing',
+            'structuring',
+            'complete',
+          ]
           const active = order.indexOf(phase) >= order.indexOf(value)
           return (
             <div className={active ? 'active' : ''} key={value}>
@@ -322,8 +352,11 @@ function SingleFileImport() {
                   )}
                 </fieldset>
                 <div className="privacy-note">
-                  <strong>AI 처리 안 함</strong>
-                  <p>원본 저장만 수행하며 파싱·구조화·AI 전송은 하지 않습니다.</p>
+                  <strong>브라우저에서 자동 정리</strong>
+                  <p>
+                    본문 추출과 REF 구조화는 내 브라우저에서 처리합니다. 원문을 Gemini에 보내지
+                    않습니다.
+                  </p>
                 </div>
               </article>
             </div>
@@ -339,15 +372,19 @@ function SingleFileImport() {
               <button
                 className="primary-button"
                 type="submit"
-                disabled={phase === 'uploading' || phase === 'saving' || phase === 'complete'}
+                disabled={!['ready'].includes(phase)}
               >
                 {phase === 'uploading'
                   ? '원본 업로드 중…'
                   : phase === 'saving'
                     ? 'Version 기록 중…'
-                    : phase === 'complete'
-                      ? '저장 완료'
-                      : 'Private Storage에 저장'}
+                    : phase === 'parsing'
+                      ? '본문 분석 중…'
+                      : phase === 'structuring'
+                        ? '지식을 연결하는 중…'
+                        : phase === 'complete'
+                          ? '저장 완료'
+                          : 'Private Storage에 저장'}
               </button>
             </div>
           )}

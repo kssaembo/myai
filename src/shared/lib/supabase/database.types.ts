@@ -869,6 +869,14 @@ export type Database = {
         }
         Returns: Json
       }
+      prepare_ref_auto_structure: {
+        Args: {
+          p_document_id: string
+          p_nodes: Json
+          p_version_id: string
+        }
+        Returns: number
+      }
       search_knowledge: {
         Args: {
           p_category_ids?: string[] | null

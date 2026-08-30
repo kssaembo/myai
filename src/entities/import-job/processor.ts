@@ -18,6 +18,7 @@ import {
   type ImportEntry,
 } from '@/entities/import-job/api'
 import type { ImportType } from '@/shared/lib/supabase/database.types'
+import { autoStructureRefDocument } from '@/entities/ref-review/api'
 
 export interface ImportProgress {
   completed: number
@@ -138,14 +139,36 @@ export async function processImportCandidates(input: {
       const result = await runDocumentParser(candidate.format, await file.arrayBuffer())
       await commitDocumentParse(versionId, result)
       const fullyParsed = result.status === 'parsed'
+      const isRef =
+        input.importType === 'ref_zip' ||
+        candidate.sourceFilename.toLocaleUpperCase('en-US').startsWith('REF_')
+      let refNeedsReview = false
+      if (isRef) {
+        await setImportJobStatus(input.jobId, 'structuring')
+        input.onProgress({
+          completed,
+          total: input.candidates.length,
+          filename: candidate.sourceFilename,
+          phase: '쉬운 말로 지식 연결',
+        })
+        const structured = await autoStructureRefDocument(
+          documentId,
+          versionId,
+          candidate.sourceFilename,
+          titleFromFilename(candidate.sourceFilename),
+        )
+        refNeedsReview = structured.status === 'needs_review'
+      }
       await updateImportEntry(candidate.id, {
-        status: fullyParsed ? 'parsed' : 'partial',
+        status: fullyParsed && !refNeedsReview ? 'parsed' : 'partial',
         contentHash: validated.contentHash,
         documentId,
         versionId,
-        errorCode: result.errorCode,
+        errorCode: refNeedsReview ? 'REF_REVIEW_REQUIRED' : result.errorCode,
         errorMessage:
-          result.errorMessage ??
+          (refNeedsReview
+            ? '자동 인식이 확실하지 않아 구조화 결과 확인이 필요합니다.'
+            : result.errorMessage) ??
           (fullyParsed ? null : '원본은 저장됐지만 일부 내용만 추출했습니다.'),
       })
     } catch (caught) {
