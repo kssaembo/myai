@@ -52,7 +52,7 @@ for (const fragment of [
 for (const fragment of [
   '관계 분석',
   'analyzeRelationships',
-  'projects.map',
+  'analysisProjects.map',
   'relationshipNotice',
 ]) {
   if (!dashboard.includes(fragment))
