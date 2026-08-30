@@ -34,7 +34,7 @@ for (const fragment of [
 
 for (const fragment of [
   "status: 'duplicate'",
-  "status: fullyParsed ? 'parsed' : 'partial'",
+  "status: fullyParsed && !refNeedsReview ? 'parsed' : 'partial'",
   "status: documentId && versionId ? 'partial' : 'failed'",
   'continue',
 ]) {

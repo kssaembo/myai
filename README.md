@@ -1,6 +1,6 @@
 # Personal AI Knowledge OS
 
-Current checkpoint: **Visual Knowledge OS Step 3 — Visual Relationship Map**.
+Current checkpoint: **REF Automatic Structuring — Plain-language Knowledge**.
 
 개인이 장기간 축적하는 문서, 프로젝트, 아이디어와 그 근거를 관리하기 위한 Personal AI Knowledge OS입니다.
 
@@ -70,3 +70,4 @@ AI 요청 무한 대기 수정 배포는 [AI Gateway 안정화 가이드](./docs
 Visual Knowledge 관계 데이터 설계는 [관계 데이터 기반 문서](./docs/visual-relationship-foundation.md)를 참고합니다.
 AI 관계 분석 배포와 사용법은 [AI 관계 분석 문서](./docs/ai-relationship-analysis.md)를 참고합니다.
 관계 지도 표시 원칙과 배포법은 [관계 지도 문서](./docs/visual-relationship-map.md)를 참고합니다.
+REF 업로드 자동 구조화와 쉬운 정보 표현은 [REF 자동 구조화 문서](./docs/ref-auto-structuring.md)를 참고합니다.
