@@ -59,6 +59,29 @@ interface PendingEmbeddingSection {
   token_estimate: number
 }
 
+interface BriefingKnowledgeItem {
+  id: string
+  title: string
+  summary: string | null
+  status: string
+  importance: number
+  updated_at: string
+  node_types: { key: string; label_ko: string } | { key: string; label_ko: string }[]
+}
+
+interface BriefingRecommendation {
+  kind: 'project' | 'idea' | 'issue'
+  title: string
+  detail: string
+  question: string
+  sourceIds: string[]
+}
+
+interface BriefingPayload {
+  summary: string
+  recommendations: BriefingRecommendation[]
+}
+
 function allowedOrigin(request: Request) {
   const origin = request.headers.get('origin') ?? ''
   const allowed = (Deno.env.get('APP_ORIGINS') ?? '')
@@ -197,6 +220,62 @@ function historyPrompt(messages: ConversationMessage[]) {
     .join('\n')
 }
 
+function parseBriefing(text: string, availableIds: Set<string>): BriefingPayload {
+  const normalized = text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/, '')
+  let candidate: unknown
+  try {
+    candidate = JSON.parse(normalized)
+  } catch {
+    throw new Error('AI_BRIEFING_JSON_INVALID')
+  }
+  if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate))
+    throw new Error('AI_BRIEFING_JSON_INVALID')
+  const input = candidate as Record<string, unknown>
+  const summary = typeof input.summary === 'string' ? input.summary.trim().slice(0, 1200) : ''
+  if (!summary) throw new Error('AI_BRIEFING_SUMMARY_INVALID')
+  const recommendations = Array.isArray(input.recommendations)
+    ? input.recommendations
+        .slice(0, 3)
+        .map((entry): BriefingRecommendation | null => {
+          if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null
+          const value = entry as Record<string, unknown>
+          const kind = ['project', 'idea', 'issue'].includes(String(value.kind))
+            ? (String(value.kind) as BriefingRecommendation['kind'])
+            : 'idea'
+          const title = typeof value.title === 'string' ? value.title.trim().slice(0, 120) : ''
+          const detail = typeof value.detail === 'string' ? value.detail.trim().slice(0, 360) : ''
+          const question =
+            typeof value.question === 'string' ? value.question.trim().slice(0, 300) : ''
+          const sourceIds = Array.isArray(value.sourceIds)
+            ? [...new Set(value.sourceIds.filter((id): id is string => typeof id === 'string'))]
+                .filter((id) => availableIds.has(id))
+                .slice(0, 3)
+            : []
+          return title && detail && question && sourceIds.length
+            ? { kind, title, detail, question, sourceIds }
+            : null
+        })
+        .filter((value): value is BriefingRecommendation => value !== null)
+    : []
+  if (!recommendations.length) throw new Error('AI_BRIEFING_RECOMMENDATIONS_INVALID')
+  return { summary, recommendations }
+}
+
+function briefingRow(row: Record<string, unknown>) {
+  return {
+    id: row.id,
+    briefingDate: row.briefing_date,
+    model: row.model,
+    summary: row.summary,
+    recommendations: row.recommendations,
+    sourceItems: row.source_items,
+    generatedAt: row.generated_at,
+  }
+}
+
 Deno.serve(async (request) => {
   const origin = allowedOrigin(request)
   if (origin === null) return new Response('Origin forbidden', { status: 403 })
@@ -219,12 +298,13 @@ Deno.serve(async (request) => {
   const { data: userData, error: userError } = await client.auth.getUser(token)
   if (userError || !userData.user) return json(origin, 401, { error: 'INVALID_SESSION' })
 
-  let body: { action?: unknown; question?: unknown; conversationId?: unknown }
+  let body: { action?: unknown; question?: unknown; conversationId?: unknown; force?: unknown }
   try {
     body = (await request.json()) as {
       action?: unknown
       question?: unknown
       conversationId?: unknown
+      force?: unknown
     }
   } catch {
     return json(origin, 400, { error: 'INVALID_JSON' })
@@ -232,7 +312,8 @@ Deno.serve(async (request) => {
   if (
     body.action !== 'connectivity_test' &&
     body.action !== 'chat' &&
-    body.action !== 'embed_pending'
+    body.action !== 'embed_pending' &&
+    body.action !== 'briefing'
   )
     return json(origin, 400, { error: 'ACTION_NOT_ALLOWED' })
   const action = body.action
@@ -248,6 +329,16 @@ Deno.serve(async (request) => {
   const embeddingModel = String(settings.embedding_model ?? '')
   const provider = createAIProvider(providerName)
   logStage(requestId, action, 'status_loaded')
+
+  if (body.action === 'briefing' && body.force !== true) {
+    const cached = await client
+      .from('ai_briefings')
+      .select('id,briefing_date,model,summary,recommendations,source_items,generated_at')
+      .eq('briefing_date', new Date().toISOString().slice(0, 10))
+      .maybeSingle()
+    if (!cached.error && cached.data)
+      return json(origin, 200, { ok: true, cached: true, ...briefingRow(cached.data) })
+  }
 
   if (body.action === 'embed_pending') {
     logStage(requestId, action, 'embedding_queue_started')
@@ -336,6 +427,8 @@ Deno.serve(async (request) => {
   let sources: KnowledgeSource[] = []
   let semanticInputTokens = 0
   let conversationId: string | null = null
+  let briefingItems: BriefingKnowledgeItem[] = []
+  let responseMimeType: 'application/json' | undefined
   if (body.action === 'chat') {
     if (typeof body.question !== 'string' || body.question.trim().length < 1)
       return json(origin, 400, { error: 'QUESTION_REQUIRED' })
@@ -403,13 +496,59 @@ Deno.serve(async (request) => {
     ].join(' ')
     prompt = `이전 대화:\n${historyPrompt(history)}\n\n개인 지식:\n${contextPrompt(sources)}\n\n현재 질문:\n${body.question.trim()}`
     maxOutputTokens = 900
+  } else if (body.action === 'briefing') {
+    const knowledgeResult = await client
+      .from('knowledge_items')
+      .select('id,title,summary,status,importance,updated_at,node_types!inner(key,label_ko)')
+      .is('deleted_at', null)
+      .neq('status', 'archived')
+      .order('importance', { ascending: false })
+      .order('updated_at', { ascending: false })
+      .limit(12)
+    if (knowledgeResult.error)
+      return json(origin, 500, { error: 'AI_BRIEFING_CONTEXT_UNAVAILABLE' })
+    briefingItems = (knowledgeResult.data ?? []) as unknown as BriefingKnowledgeItem[]
+    if (!briefingItems.length) return json(origin, 422, { error: 'AI_BRIEFING_KNOWLEDGE_REQUIRED' })
+    const context = briefingItems.map((item) => {
+      const nodeType = Array.isArray(item.node_types) ? item.node_types[0] : item.node_types
+      return {
+        id: item.id,
+        type: nodeType?.key ?? 'knowledge',
+        title: item.title,
+        summary: item.summary?.slice(0, 500) ?? '',
+        status: item.status,
+        importance: item.importance,
+        updatedAt: item.updated_at,
+      }
+    })
+    systemInstruction = [
+      '당신은 사용자의 개인 지식만을 분석하는 한국어 개인 비서입니다.',
+      '제공된 기록에 없는 사실을 만들지 마세요.',
+      '오늘 주목할 맥락을 한 문장으로 요약하고 실행 가치가 높은 추천을 최대 3개 작성하세요.',
+      '각 추천은 반드시 실제 근거 ID를 1개 이상 sourceIds에 포함해야 합니다.',
+      '출력은 마크다운 없이 지정된 JSON 객체 하나만 반환하세요.',
+    ].join(' ')
+    prompt = [
+      '개인 기록:',
+      JSON.stringify(context),
+      '',
+      '출력 형식:',
+      '{"summary":"한 문장","recommendations":[{"kind":"project|idea|issue","title":"짧은 제목","detail":"추천 이유와 다음 행동","question":"AI에게 이어서 물어볼 질문","sourceIds":["실제 ID"]}]}',
+    ].join('\n')
+    maxOutputTokens = 700
+    responseMimeType = 'application/json'
   }
   const estimatedTokens =
     Math.ceil((prompt.length + systemInstruction.length) / 4) + semanticInputTokens
   const { data: reservation, error: reserveError } = await client.rpc('reserve_ai_request', {
     p_provider: providerName,
     p_model: model,
-    p_purpose: body.action === 'chat' ? 'chat' : 'connectivity_test',
+    p_purpose:
+      body.action === 'chat'
+        ? 'chat'
+        : body.action === 'briefing'
+          ? 'briefing'
+          : 'connectivity_test',
     p_estimated_input_tokens: estimatedTokens,
   })
   if (reserveError || !reservation || typeof reservation !== 'object' || Array.isArray(reservation))
@@ -423,6 +562,7 @@ Deno.serve(async (request) => {
       systemInstruction,
       prompt,
       maxOutputTokens,
+      responseMimeType,
     })
     logStage(requestId, action, 'provider_request_completed')
     await client.rpc('complete_ai_request', {
@@ -468,6 +608,21 @@ Deno.serve(async (request) => {
         })),
         usage: reservation,
       })
+    }
+    if (body.action === 'briefing') {
+      const parsed = parseBriefing(result.text, new Set(briefingItems.map((item) => item.id)))
+      const referencedIds = [...new Set(parsed.recommendations.flatMap((item) => item.sourceIds))]
+      const sourceItems = briefingItems
+        .filter((item) => referencedIds.includes(item.id))
+        .map((item) => ({ id: item.id, title: item.title }))
+      const saved = await client.rpc('save_ai_briefing', {
+        p_model: model,
+        p_summary: parsed.summary,
+        p_recommendations: parsed.recommendations,
+        p_source_items: sourceItems,
+      })
+      if (saved.error || !saved.data) return json(origin, 500, { error: 'AI_BRIEFING_SAVE_FAILED' })
+      return json(origin, 200, { ok: true, cached: false, ...saved.data })
     }
     return json(origin, 200, {
       ok: true,

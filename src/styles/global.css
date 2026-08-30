@@ -1258,6 +1258,25 @@ a {
   font-size: 0.58rem;
   font-weight: 700;
 }
+.briefing-refresh {
+  padding: 0;
+  color: #158579;
+  border: 0;
+  background: transparent;
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+.briefing-refresh:disabled {
+  color: #a4adb7;
+  cursor: default;
+}
+.briefing-summary {
+  margin: 0.55rem 0 0.35rem;
+  color: #26384d;
+  font-size: 0.67rem;
+  font-weight: 700;
+  line-height: 1.55;
+}
 .focus-list.compact {
   padding: 0;
 }
@@ -1298,6 +1317,66 @@ a {
   color: var(--teal-dark);
   border-radius: 7px;
   background: var(--teal-soft);
+}
+.briefing-recommendation {
+  overflow: hidden;
+  border: 1px solid #e0e8eb;
+  border-radius: 10px;
+  background: rgb(248 251 252 / 86%);
+}
+.suggestion-list .briefing-recommendation button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.briefing-recommendation button div {
+  min-width: 0;
+}
+.briefing-recommendation button small {
+  display: block;
+  margin-bottom: 0.12rem;
+  color: var(--teal-dark);
+  font-size: 0.5rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+.briefing-recommendation button strong,
+.briefing-recommendation button p {
+  display: block;
+}
+.briefing-recommendation button strong {
+  color: #1f3045;
+  font-size: 0.64rem;
+}
+.briefing-recommendation button p {
+  margin: 0.18rem 0 0;
+  color: #697789;
+  font-size: 0.57rem;
+  line-height: 1.45;
+}
+.briefing-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0 0.7rem 0.55rem 2.95rem;
+}
+.briefing-sources a {
+  max-width: 100%;
+  overflow: hidden;
+  color: #728092;
+  font-size: 0.5rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.briefing-sources a::before {
+  content: '근거 · ';
+  color: #16968a;
+}
+.briefing-meta {
+  display: block;
+  margin-top: 0.6rem;
+  color: #9aa4b0;
+  font-size: 0.5rem;
 }
 .recent-flow-list {
   display: grid;

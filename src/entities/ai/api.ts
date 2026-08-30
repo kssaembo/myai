@@ -83,6 +83,25 @@ export interface AIChatResult {
   }[]
 }
 
+export interface AIBriefingRecommendation {
+  kind: 'project' | 'idea' | 'issue'
+  title: string
+  detail: string
+  question: string
+  sourceIds: string[]
+}
+
+export interface AIBriefing {
+  id: string
+  briefingDate: string
+  model: string
+  summary: string
+  recommendations: AIBriefingRecommendation[]
+  sourceItems: { id: string; title: string }[]
+  generatedAt: string
+  cached?: boolean
+}
+
 function throwIfError(error: { message: string } | null) {
   if (error) throw new Error(error.message)
 }
@@ -206,4 +225,35 @@ export async function sendAIMessage(question: string, conversationId: string | n
 export async function deleteAIConversation(conversationId: string) {
   const { error } = await supabase.from('ai_conversations').delete().eq('id', conversationId)
   throwIfError(error)
+}
+
+function normalizeBriefing(input: Record<string, unknown>): AIBriefing {
+  return {
+    id: String(input.id),
+    briefingDate: String(input.briefingDate ?? input.briefing_date),
+    model: String(input.model),
+    summary: String(input.summary),
+    recommendations: (input.recommendations ?? []) as AIBriefingRecommendation[],
+    sourceItems: (input.sourceItems ?? input.source_items ?? []) as { id: string; title: string }[],
+    generatedAt: String(input.generatedAt ?? input.generated_at),
+    cached: input.cached === true,
+  }
+}
+
+export async function getTodayBriefing() {
+  const today = new Date().toISOString().slice(0, 10)
+  const { data, error } = await supabase
+    .from('ai_briefings')
+    .select('id,briefing_date,model,summary,recommendations,source_items,generated_at')
+    .eq('briefing_date', today)
+    .maybeSingle()
+  throwIfError(error)
+  return data ? normalizeBriefing(data) : null
+}
+
+export async function generateBriefing(force = false) {
+  const response = await invokeAIGateway<Record<string, unknown>>({ action: 'briefing', force })
+  await throwIfFunctionError(response.error)
+  if (!response.data?.ok) throw new Error('AI_BRIEFING_FAILED')
+  return normalizeBriefing(response.data)
 }

@@ -5,6 +5,7 @@ export interface AIGenerateRequest {
   systemInstruction: string
   prompt: string
   maxOutputTokens: number
+  responseMimeType?: 'application/json'
 }
 
 export interface AIGenerateResult {

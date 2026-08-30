@@ -34,6 +34,21 @@ export type SectionChunkKind = 'section' | 'paragraph_group' | 'table' | 'code' 
 export type EvidenceRole =
   'definition' | 'support' | 'contradiction' | 'example' | 'implementation_status'
 export type RelationStatus = 'proposed' | 'active' | 'rejected' | 'archived'
+export type VisualAnalysisKind = 'relationship' | 'comparison' | 'pattern'
+export type VisualAnalysisStatus =
+  'queued' | 'processing' | 'completed' | 'partial' | 'failed' | 'superseded'
+export type VisualInsightKind =
+  | 'commonality'
+  | 'difference'
+  | 'technical_link'
+  | 'reusable_component'
+  | 'recurring_problem'
+  | 'solution_pattern'
+  | 'development_pattern'
+  | 'educational_link'
+export type VisualInsightStatus = 'proposed' | 'accepted' | 'rejected' | 'superseded'
+export type VisualInsightItemRole =
+  'subject' | 'source' | 'target' | 'contrast' | 'example' | 'problem' | 'solution'
 export type ImportType = 'files' | 'zip' | 'ref_zip'
 export type ImportJobStatus =
   | 'queued'
@@ -277,6 +292,72 @@ type RelationEvidenceRow = {
   created_at: string
 }
 
+type VisualAnalysisRunRow = {
+  id: string
+  owner_id: string
+  analysis_kind: VisualAnalysisKind
+  status: VisualAnalysisStatus
+  model: string | null
+  schema_version: string
+  prompt_version: string | null
+  input_fingerprint: string | null
+  source_revision_at: string
+  error_code: string | null
+  error_message: string | null
+  created_at: string
+  started_at: string | null
+  completed_at: string | null
+}
+
+type VisualAnalysisScopeRow = {
+  owner_id: string
+  analysis_id: string
+  item_id: string
+  scope_role: string
+  ordinal: number
+  created_at: string
+}
+
+type VisualInsightRow = {
+  id: string
+  owner_id: string
+  analysis_id: string
+  insight_kind: VisualInsightKind
+  dimension: string
+  title: string
+  summary: string
+  confidence: number | null
+  importance: number
+  status: VisualInsightStatus
+  origin: ContentOrigin
+  properties: Json
+  promoted_relation_id: string | null
+  created_at: string
+  reviewed_at: string | null
+}
+
+type VisualInsightItemRow = {
+  owner_id: string
+  insight_id: string
+  item_id: string
+  item_role: VisualInsightItemRole
+  ordinal: number
+  weight: number | null
+  created_at: string
+}
+
+type VisualInsightEvidenceRow = {
+  id: string
+  owner_id: string
+  insight_id: string
+  item_id: string
+  document_id: string
+  version_id: string
+  section_id: string | null
+  evidence_text: string
+  created_at: string
+}
+
 type ImportJobRow = {
   id: string
   owner_id: string
@@ -376,6 +457,17 @@ type AIMessageSourceRow = {
   rank: number
   snippet: string
   created_at: string
+}
+
+type AIBriefingRow = {
+  id: string
+  owner_id: string
+  briefing_date: string
+  model: string
+  summary: string
+  recommendations: Json
+  source_items: Json
+  generated_at: string
 }
 
 export type SearchKnowledgeRow = {
@@ -581,6 +673,46 @@ export type Database = {
         >,
         UpdateRow<RelationEvidenceRow, 'id' | 'owner_id' | 'created_at'>
       >
+      visual_analysis_runs: TableDefinition<
+        VisualAnalysisRunRow,
+        InsertRow<
+          VisualAnalysisRunRow,
+          'owner_id' | 'analysis_kind',
+          'id' | 'source_revision_at' | 'created_at'
+        >,
+        UpdateRow<VisualAnalysisRunRow, 'id' | 'owner_id' | 'created_at'>
+      >
+      visual_analysis_scope: TableDefinition<
+        VisualAnalysisScopeRow,
+        InsertRow<VisualAnalysisScopeRow, 'owner_id' | 'analysis_id' | 'item_id', 'created_at'>,
+        UpdateRow<VisualAnalysisScopeRow, 'owner_id' | 'analysis_id' | 'item_id' | 'created_at'>
+      >
+      visual_insights: TableDefinition<
+        VisualInsightRow,
+        InsertRow<
+          VisualInsightRow,
+          'owner_id' | 'analysis_id' | 'insight_kind' | 'dimension' | 'title' | 'summary',
+          'id' | 'created_at'
+        >,
+        UpdateRow<VisualInsightRow, 'id' | 'owner_id' | 'analysis_id' | 'created_at'>
+      >
+      visual_insight_items: TableDefinition<
+        VisualInsightItemRow,
+        InsertRow<VisualInsightItemRow, 'owner_id' | 'insight_id' | 'item_id', 'created_at'>,
+        UpdateRow<
+          VisualInsightItemRow,
+          'owner_id' | 'insight_id' | 'item_id' | 'item_role' | 'created_at'
+        >
+      >
+      visual_insight_evidence: TableDefinition<
+        VisualInsightEvidenceRow,
+        InsertRow<
+          VisualInsightEvidenceRow,
+          'owner_id' | 'insight_id' | 'item_id' | 'document_id' | 'version_id' | 'evidence_text',
+          'id' | 'created_at'
+        >,
+        UpdateRow<VisualInsightEvidenceRow, 'id' | 'owner_id' | 'insight_id' | 'created_at'>
+      >
       import_jobs: TableDefinition<
         ImportJobRow,
         InsertRow<ImportJobRow, 'owner_id' | 'import_type', 'id' | 'created_at'>,
@@ -632,6 +764,15 @@ export type Database = {
           'id' | 'created_at'
         >,
         UpdateRow<AIMessageSourceRow, 'id' | 'owner_id' | 'message_id' | 'created_at'>
+      >
+      ai_briefings: TableDefinition<
+        AIBriefingRow,
+        InsertRow<
+          AIBriefingRow,
+          'owner_id' | 'model' | 'summary' | 'recommendations',
+          'id' | 'briefing_date' | 'generated_at'
+        >,
+        UpdateRow<AIBriefingRow, 'id' | 'owner_id' | 'briefing_date' | 'generated_at'>
       >
     }
     Views: EmptySchema
@@ -771,6 +912,14 @@ export type Database = {
         Args: { p_limit?: number; p_offset?: number; p_project_id?: string | null }
         Returns: Json
       }
+      get_visual_relationship_foundation: {
+        Args: {
+          p_item_ids?: string[] | null
+          p_insight_kinds?: VisualInsightKind[] | null
+          p_limit?: number
+        }
+        Returns: Json
+      }
       export_knowledge_item: { Args: { p_item_id: string }; Returns: Json }
       trash_knowledge_item: { Args: { p_item_id: string }; Returns: undefined }
       restore_knowledge_item: { Args: { p_item_id: string }; Returns: undefined }
@@ -839,6 +988,15 @@ export type Database = {
         }
         Returns: Json
       }
+      save_ai_briefing: {
+        Args: {
+          p_model: string
+          p_summary: string
+          p_recommendations: Json
+          p_source_items: Json
+        }
+        Returns: Json
+      }
       normalize_lookup_text: {
         Args: { input_value: string }
         Returns: string
@@ -859,6 +1017,11 @@ export type Database = {
       section_chunk_kind: SectionChunkKind
       evidence_role: EvidenceRole
       relation_status: RelationStatus
+      visual_analysis_kind: VisualAnalysisKind
+      visual_analysis_status: VisualAnalysisStatus
+      visual_insight_kind: VisualInsightKind
+      visual_insight_status: VisualInsightStatus
+      visual_insight_item_role: VisualInsightItemRole
       import_type: ImportType
       import_job_status: ImportJobStatus
       import_entry_status: ImportEntryStatus

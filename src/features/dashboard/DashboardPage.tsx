@@ -3,10 +3,13 @@ import { Link } from 'react-router-dom'
 
 import {
   deleteAIConversation,
+  generateBriefing,
+  getTodayBriefing,
   listAIConversations,
   listAIMessages,
   sendAIMessage,
   type AIConversation,
+  type AIBriefing,
   type AIMessage,
 } from '@/entities/ai/api'
 import { getKnowledgeGraph, type GraphPage } from '@/entities/graph/api'
@@ -21,21 +24,26 @@ export function DashboardPage() {
   const [conversations, setConversations] = useState<AIConversation[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<AIMessage[]>([])
+  const [briefing, setBriefing] = useState<AIBriefing | null>(null)
+  const [isBriefing, setIsBriefing] = useState(false)
   const [question, setQuestion] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState('')
   const messageEndRef = useRef<HTMLDivElement>(null)
+  const briefingAttemptedRef = useRef(false)
 
   const loadWorkspace = useCallback(async () => {
     try {
-      const [knowledge, chatList, knowledgeGraph] = await Promise.all([
+      const [knowledge, chatList, knowledgeGraph, todayBriefing] = await Promise.all([
         listKnowledge(),
         listAIConversations(),
         getKnowledgeGraph(null).catch(() => null),
+        getTodayBriefing().catch(() => null),
       ])
       setRecords(knowledge)
       setConversations(chatList)
       setGraph(knowledgeGraph)
+      setBriefing(todayBriefing)
     } catch (caught) {
       setError(friendlyDataError(caught))
     }
@@ -45,6 +53,16 @@ export function DashboardPage() {
     const timeout = window.setTimeout(() => void loadWorkspace(), 0)
     return () => window.clearTimeout(timeout)
   }, [loadWorkspace])
+
+  useEffect(() => {
+    if (!records.length || briefing || briefingAttemptedRef.current) return
+    briefingAttemptedRef.current = true
+    setIsBriefing(true)
+    void generateBriefing(false)
+      .then(setBriefing)
+      .catch(() => undefined)
+      .finally(() => setIsBriefing(false))
+  }, [briefing, records.length])
 
   useEffect(() => {
     if (!activeConversationId) return
@@ -118,6 +136,19 @@ export function DashboardPage() {
     }
   }
 
+  const refreshBriefing = async () => {
+    if (isBriefing) return
+    setError('')
+    setIsBriefing(true)
+    try {
+      setBriefing(await generateBriefing(true))
+    } catch (caught) {
+      setError(friendlyDataError(caught))
+    } finally {
+      setIsBriefing(false)
+    }
+  }
+
   const projects = records.filter((item) => item.nodeType.key === 'project').slice(0, 4)
   const thoughtRecords = records
     .filter((item) => ['idea', 'question', 'problem', 'lesson'].includes(item.nodeType.key))
@@ -130,11 +161,12 @@ export function DashboardPage() {
   const activeSourceIds = new Set(latestAssistant?.sources.map((source) => source.itemId) ?? [])
   const trimmedQuestion = question.trim()
   const focusText = trimmedQuestion ? trimmedQuestion : (latestUserQuestion ?? '')
-  const suggestedQuestions = [
+  const fallbackQuestions = [
     projects[0] ? `${projects[0].title}에서 지금 가장 먼저 해결할 문제는 무엇일까?` : null,
     thoughtRecords[0] ? `${thoughtRecords[0].title}을 더 구체적인 실행안으로 발전시켜줘.` : null,
     records.length ? '내 기록에서 반복되는 설계 원칙 세 가지를 찾아줘.' : null,
   ].filter((value): value is string => Boolean(value))
+  const sourceTitles = new Map(briefing?.sourceItems.map((item) => [item.id, item.title]) ?? [])
 
   return (
     <section className="dashboard jarvis-dashboard" aria-labelledby="dashboard-title">
@@ -288,12 +320,40 @@ export function DashboardPage() {
           </div>
           <div className="intelligence-section suggestion-section">
             <div className="intelligence-section-title">
-              <strong>다음 질문 추천</strong>
-              <span>내 기록 기반</span>
+              <strong>AI 브리핑</strong>
+              <button
+                className="briefing-refresh"
+                disabled={isBriefing || !records.length}
+                type="button"
+                onClick={() => void refreshBriefing()}
+              >
+                {isBriefing ? '분석 중…' : briefing ? '새로 분석' : '브리핑 생성'}
+              </button>
             </div>
+            {briefing?.summary && <p className="briefing-summary">{briefing.summary}</p>}
             <div className="suggestion-list">
-              {suggestedQuestions.length ? (
-                suggestedQuestions.map((suggestion) => (
+              {briefing?.recommendations.length ? (
+                briefing.recommendations.map((recommendation) => (
+                  <article className="briefing-recommendation" key={recommendation.title}>
+                    <button type="button" onClick={() => setQuestion(recommendation.question)}>
+                      <span>↗</span>
+                      <div>
+                        <small>{recommendation.kind}</small>
+                        <strong>{recommendation.title}</strong>
+                        <p>{recommendation.detail}</p>
+                      </div>
+                    </button>
+                    <div className="briefing-sources">
+                      {recommendation.sourceIds.map((sourceId) => (
+                        <Link to={`/knowledge/${sourceId}`} key={sourceId}>
+                          {sourceTitles.get(sourceId) ?? '근거 지식'}
+                        </Link>
+                      ))}
+                    </div>
+                  </article>
+                ))
+              ) : fallbackQuestions.length ? (
+                fallbackQuestions.map((suggestion) => (
                   <button type="button" key={suggestion} onClick={() => setQuestion(suggestion)}>
                     <span>↗</span>
                     {suggestion}
@@ -303,6 +363,11 @@ export function DashboardPage() {
                 <p className="compact-empty">지식을 추가하면 이어서 물어볼 질문을 제안합니다.</p>
               )}
             </div>
+            {briefing && (
+              <small className="briefing-meta">
+                오늘 저장된 브리핑 · {formatDate(briefing.generatedAt)}
+              </small>
+            )}
           </div>
           <div className="intelligence-section recent-flow-section">
             <div className="intelligence-section-title">
