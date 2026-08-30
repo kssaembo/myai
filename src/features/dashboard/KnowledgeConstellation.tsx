@@ -1,13 +1,17 @@
+import { useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 
 import type { GraphPage } from '@/entities/graph/api'
 import type { KnowledgeRecord } from '@/entities/knowledge-item/api'
+import type { VisualInsight, VisualRelationshipFoundation } from '@/entities/visual-analysis/api'
+import type { VisualInsightKind } from '@/shared/lib/supabase/database.types'
 
 interface KnowledgeConstellationProps {
   records: KnowledgeRecord[]
   graph: GraphPage | null
   focusText: string
   activeSourceIds: Set<string>
+  visualFoundation: VisualRelationshipFoundation | null
 }
 
 interface ConstellationNode {
@@ -19,7 +23,12 @@ interface ConstellationNode {
   isActive: boolean
 }
 
-const positions = [
+interface MapPosition {
+  x: number
+  y: number
+}
+
+const contextPositions: MapPosition[] = [
   { x: 150, y: 95 },
   { x: 360, y: 68 },
   { x: 645, y: 70 },
@@ -30,16 +39,63 @@ const positions = [
   { x: 845, y: 275 },
 ]
 
+const projectPositions: MapPosition[] = [
+  { x: 145, y: 105 },
+  { x: 500, y: 72 },
+  { x: 855, y: 105 },
+  { x: 155, y: 410 },
+  { x: 500, y: 448 },
+  { x: 845, y: 410 },
+]
+
+const insightPositions: MapPosition[] = [
+  { x: 335, y: 205 },
+  { x: 500, y: 175 },
+  { x: 665, y: 205 },
+  { x: 350, y: 325 },
+  { x: 500, y: 350 },
+  { x: 650, y: 325 },
+]
+
+const insightMeta: Record<VisualInsightKind, { label: string; color: string }> = {
+  commonality: { label: '공통 구조', color: '#109c90' },
+  difference: { label: '차이점', color: '#e66b2e' },
+  technical_link: { label: '기술 연결', color: '#397dcc' },
+  reusable_component: { label: '재사용 요소', color: '#7957bd' },
+  recurring_problem: { label: '반복 문제', color: '#d24c58' },
+  solution_pattern: { label: '해결 패턴', color: '#27965a' },
+  development_pattern: { label: '개발 패턴', color: '#5265c5' },
+  educational_link: { label: '교육 연결', color: '#b58512' },
+}
+
+const dimensionLabels: Record<string, string> = {
+  architecture: '구조',
+  technology: '기술',
+  ux: '사용 경험',
+  operation: '운영',
+  education: '교육',
+  problem_solving: '문제 해결',
+  reuse: '재사용',
+}
+
 function keywords(value: string) {
   return [...new Set(value.toLocaleLowerCase().match(/[가-힣a-z0-9_-]{2,}/g) ?? [])].slice(0, 8)
 }
 
-export function KnowledgeConstellation({
+function visualStyle(position: MapPosition, color: string, height: number): CSSProperties {
+  return {
+    '--node-color': color,
+    left: `${position.x / 10}%`,
+    top: `${position.y / height}%`,
+  } as CSSProperties
+}
+
+function ContextConstellation({
   records,
   graph,
   focusText,
   activeSourceIds,
-}: KnowledgeConstellationProps) {
+}: Omit<KnowledgeConstellationProps, 'visualFoundation'>) {
   const queryWords = keywords(focusText)
   const recordMap = new Map(records.map((record) => [record.id, record]))
   const graphNodes = graph?.nodes ?? []
@@ -71,9 +127,9 @@ export function KnowledgeConstellation({
   })
   const nodes = candidates
     .sort((left, right) => right.score - left.score)
-    .slice(0, positions.length)
+    .slice(0, contextPositions.length)
   const selectedIds = new Set(nodes.map((node) => node.id))
-  const nodePosition = new Map(nodes.map((node, index) => [node.id, positions[index]]))
+  const nodePosition = new Map(nodes.map((node, index) => [node.id, contextPositions[index]]))
   const visibleEdges = (graph?.edges ?? []).filter(
     (edge) => selectedIds.has(edge.source_item_id) && selectedIds.has(edge.target_item_id),
   )
@@ -121,26 +177,17 @@ export function KnowledgeConstellation({
             <span>{focusText.trim() ? 'CURRENT THOUGHT' : 'PERSONAL CONTEXT'}</span>
             <strong>{centerLabel}</strong>
           </div>
-          {nodes.map((node, index) => {
-            const position = positions[index]
-            return (
-              <Link
-                className={`constellation-node${node.isActive ? ' is-active' : ''}`}
-                style={
-                  {
-                    '--node-color': node.color,
-                    left: `${position.x / 10}%`,
-                    top: `${position.y / 3.8}%`,
-                  } as React.CSSProperties
-                }
-                to={`/knowledge/${node.id}`}
-                key={node.id}
-              >
-                <span>{node.label}</span>
-                <strong>{node.title}</strong>
-              </Link>
-            )
-          })}
+          {nodes.map((node, index) => (
+            <Link
+              className={`constellation-node${node.isActive ? ' is-active' : ''}`}
+              style={visualStyle(contextPositions[index], node.color, 3.8)}
+              to={`/knowledge/${node.id}`}
+              key={node.id}
+            >
+              <span>{node.label}</span>
+              <strong>{node.title}</strong>
+            </Link>
+          ))}
         </>
       ) : (
         <div className="constellation-empty">
@@ -150,4 +197,171 @@ export function KnowledgeConstellation({
       )}
     </div>
   )
+}
+
+function RelationshipMap({
+  foundation,
+  activeSourceIds,
+}: {
+  foundation: VisualRelationshipFoundation
+  activeSourceIds: Set<string>
+}) {
+  const insights = foundation.insights.filter((insight) => insight.items.length >= 2).slice(0, 6)
+  const [selectedInsightId, setSelectedInsightId] = useState<string | null>(null)
+  const selectedInsight = insights.find((insight) => insight.id === selectedInsightId) ?? null
+  const projectMembers = [
+    ...new Map(
+      insights
+        .flatMap((insight) => insight.items)
+        .filter((item) => item.node_type_key === 'project')
+        .map((item) => [item.item_id, item]),
+    ).values(),
+  ].slice(0, projectPositions.length)
+  const projectPosition = new Map(
+    projectMembers.map((project, index) => [project.item_id, projectPositions[index]]),
+  )
+  const visibleProjectIds = new Set(projectMembers.map((project) => project.item_id))
+  const directRelations = foundation.existing_relations.filter(
+    (relation) =>
+      visibleProjectIds.has(relation.source_item_id) &&
+      visibleProjectIds.has(relation.target_item_id),
+  )
+
+  return (
+    <div className="relationship-map-shell">
+      <div
+        className="constellation-canvas relationship-map-canvas"
+        aria-label="AI 프로젝트 관계 지도"
+      >
+        <div className="relationship-map-summary">
+          <strong>AI 관계 {insights.length}</strong>
+          <span>프로젝트 {projectMembers.length}</span>
+        </div>
+        <svg viewBox="0 0 1000 520" preserveAspectRatio="none" aria-hidden="true">
+          {directRelations.map((relation) => {
+            const source = projectPosition.get(relation.source_item_id)
+            const target = projectPosition.get(relation.target_item_id)
+            if (!source || !target) return null
+            return (
+              <line
+                className="relationship-direct-line"
+                key={`direct-${relation.id}`}
+                x1={source.x}
+                y1={source.y}
+                x2={target.x}
+                y2={target.y}
+              />
+            )
+          })}
+          {insights.flatMap((insight, insightIndex) => {
+            const target = insightPositions[insightIndex]
+            return insight.items.map((member) => {
+              const source = projectPosition.get(member.item_id)
+              if (!source) return null
+              const controlX = (source.x + target.x) / 2
+              const controlY = (source.y + target.y) / 2 - 18 + insightIndex * 2
+              return (
+                <path
+                  className={`relationship-insight-line${selectedInsightId === insight.id ? ' is-selected' : ''}`}
+                  key={`${insight.id}-${member.item_id}`}
+                  style={
+                    { '--insight-color': insightMeta[insight.insight_kind].color } as CSSProperties
+                  }
+                  d={`M ${source.x} ${source.y} Q ${controlX} ${controlY} ${target.x} ${target.y}`}
+                />
+              )
+            })
+          })}
+        </svg>
+
+        {projectMembers.map((project, index) => (
+          <Link
+            className={`relationship-project-node${activeSourceIds.has(project.item_id) ? ' is-active' : ''}`}
+            style={visualStyle(projectPositions[index], project.node_type_color, 5.2)}
+            to={`/knowledge/${project.item_id}`}
+            key={project.item_id}
+          >
+            <span>PROJECT</span>
+            <strong>{project.title}</strong>
+          </Link>
+        ))}
+
+        {insights.map((insight, index) => {
+          const meta = insightMeta[insight.insight_kind]
+          return (
+            <button
+              className={`relationship-insight-node${selectedInsightId === insight.id ? ' is-selected' : ''}`}
+              style={visualStyle(insightPositions[index], meta.color, 5.2)}
+              type="button"
+              aria-pressed={selectedInsightId === insight.id}
+              onClick={() => setSelectedInsightId(insight.id)}
+              key={insight.id}
+            >
+              <span>{meta.label}</span>
+              <strong>{insight.title}</strong>
+              <small>{dimensionLabels[insight.dimension] ?? insight.dimension}</small>
+            </button>
+          )
+        })}
+      </div>
+
+      {selectedInsight && (
+        <InsightSummary insight={selectedInsight} onClose={() => setSelectedInsightId(null)} />
+      )}
+    </div>
+  )
+}
+
+function InsightSummary({ insight, onClose }: { insight: VisualInsight; onClose: () => void }) {
+  const meta = insightMeta[insight.insight_kind]
+  return (
+    <aside className="relationship-insight-summary" aria-label="선택한 관계 요약">
+      <div className="relationship-summary-heading">
+        <div>
+          <span style={{ '--insight-color': meta.color } as CSSProperties}>{meta.label}</span>
+          <h3>{insight.title}</h3>
+        </div>
+        <button type="button" aria-label="관계 요약 닫기" onClick={onClose}>
+          ×
+        </button>
+      </div>
+      <p>{insight.summary}</p>
+      <div className="relationship-summary-projects">
+        {insight.items.map((item) => (
+          <Link to={`/knowledge/${item.item_id}`} key={item.item_id}>
+            {item.title}
+          </Link>
+        ))}
+      </div>
+      <div className="relationship-summary-meta">
+        <span>근거 {insight.evidence.length}개</span>
+        {insight.confidence !== null && <span>신뢰도 {Math.round(insight.confidence * 100)}%</span>}
+        <span>{insight.status === 'accepted' ? '확인된 관계' : 'AI 제안'}</span>
+      </div>
+      {!!insight.evidence.length && (
+        <details className="relationship-evidence-details">
+          <summary>근거 확인</summary>
+          <ul>
+            {insight.evidence.slice(0, 3).map((evidence) => (
+              <li key={evidence.id}>{evidence.evidence_text}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </aside>
+  )
+}
+
+export function KnowledgeConstellation(props: KnowledgeConstellationProps) {
+  const hasVisualInsights = Boolean(
+    props.visualFoundation?.insights.some((insight) => insight.items.length >= 2),
+  )
+  if (hasVisualInsights && props.visualFoundation)
+    return (
+      <RelationshipMap
+        foundation={props.visualFoundation}
+        activeSourceIds={props.activeSourceIds}
+      />
+    )
+  return <ContextConstellation {...props} />
 }

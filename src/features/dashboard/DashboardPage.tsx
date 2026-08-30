@@ -16,7 +16,9 @@ import { getKnowledgeGraph, type GraphPage } from '@/entities/graph/api'
 import { listKnowledge, type KnowledgeRecord } from '@/entities/knowledge-item/api'
 import {
   getLatestRelationshipAnalysisRun,
+  getVisualRelationshipFoundation,
   runRelationshipAnalysis,
+  type VisualRelationshipFoundation,
   type VisualAnalysisRunSummary,
 } from '@/entities/visual-analysis/api'
 import { formatDate, friendlyDataError } from '@/shared/lib/display'
@@ -31,6 +33,9 @@ export function DashboardPage() {
   const [messages, setMessages] = useState<AIMessage[]>([])
   const [briefing, setBriefing] = useState<AIBriefing | null>(null)
   const [relationshipRun, setRelationshipRun] = useState<VisualAnalysisRunSummary | null>(null)
+  const [visualFoundation, setVisualFoundation] = useState<VisualRelationshipFoundation | null>(
+    null,
+  )
   const [relationshipNotice, setRelationshipNotice] = useState('')
   const [isRelationshipAnalyzing, setIsRelationshipAnalyzing] = useState(false)
   const [isBriefing, setIsBriefing] = useState(false)
@@ -42,19 +47,27 @@ export function DashboardPage() {
 
   const loadWorkspace = useCallback(async () => {
     try {
-      const [knowledge, chatList, knowledgeGraph, todayBriefing, latestRelationshipRun] =
-        await Promise.all([
-          listKnowledge(),
-          listAIConversations(),
-          getKnowledgeGraph(null).catch(() => null),
-          getTodayBriefing().catch(() => null),
-          getLatestRelationshipAnalysisRun().catch(() => null),
-        ])
+      const [
+        knowledge,
+        chatList,
+        knowledgeGraph,
+        todayBriefing,
+        latestRelationshipRun,
+        relationshipFoundation,
+      ] = await Promise.all([
+        listKnowledge(),
+        listAIConversations(),
+        getKnowledgeGraph(null).catch(() => null),
+        getTodayBriefing().catch(() => null),
+        getLatestRelationshipAnalysisRun().catch(() => null),
+        getVisualRelationshipFoundation(null, null, 24).catch(() => null),
+      ])
       setRecords(knowledge)
       setConversations(chatList)
       setGraph(knowledgeGraph)
       setBriefing(todayBriefing)
       setRelationshipRun(latestRelationshipRun)
+      setVisualFoundation(relationshipFoundation)
     } catch (caught) {
       setError(friendlyDataError(caught))
     }
@@ -182,6 +195,7 @@ export function DashboardPage() {
           : `프로젝트 관계 인사이트 ${result.insightCount}개를 분석해 저장했습니다.`,
       )
       setRelationshipRun(await getLatestRelationshipAnalysisRun())
+      setVisualFoundation(await getVisualRelationshipFoundation(null, null, 24))
     } catch (caught) {
       setError(friendlyDataError(caught))
     } finally {
@@ -431,7 +445,9 @@ export function DashboardPage() {
             <p className="eyebrow">Thought Map</p>
             <h2>생각의 연결</h2>
             <p className="constellation-description">
-              질문을 입력하거나 답변을 받으면 관련 지식과 실제 Relation이 활성화됩니다.
+              {visualFoundation?.insights.length
+                ? 'AI가 발견한 프로젝트 관계를 선택하면 핵심 요약과 근거를 확인할 수 있습니다.'
+                : '질문을 입력하거나 답변을 받으면 관련 지식과 실제 Relation이 활성화됩니다.'}
             </p>
           </div>
           <div className="constellation-header-actions">
@@ -461,6 +477,7 @@ export function DashboardPage() {
           graph={graph}
           focusText={focusText}
           activeSourceIds={activeSourceIds}
+          visualFoundation={visualFoundation}
         />
       </article>
     </section>
